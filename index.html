@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Qala — Smart City Guide &amp; Event Hub (prototype)</title>
+  <meta name="description" content="Clickable prototype of Qala: one app, one map, everything happening in Astana.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233b82f6'/%3E%3Ctext x='50' y='68' font-size='56' text-anchor='middle' fill='white' font-family='Arial' font-weight='700'%3EQ%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="stage">
+    <aside class="side">
+      <div class="logo-lg">Q</div>
+      <h1>Qala</h1>
+      <p>Smart City Guide &amp; Event Hub for Astana.<br>Clickable ICT Endterm prototype.</p>
+      <ul>
+        <li>Pick a role and interests</li>
+        <li>Explore places and events on the map</li>
+        <li>Build <b>My Day</b> and try <b>Plan with AI</b></li>
+        <li>Check in, earn badges</li>
+      </ul>
+      <button class="btn ghost" data-act="resetDemo">Reset demo data</button>
+    </aside>
+
+    <div class="phone" id="phone">
+      <main id="screens">
+        <!-- 1 Onboarding -->
+        <section class="screen" id="s-onb"></section>
+
+        <!-- 2 Home map -->
+        <section class="screen" id="s-map">
+          <div class="map-top">
+            <div class="search">
+              <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <input id="searchInput" type="search" placeholder="Search places &amp; events" autocomplete="off">
+            </div>
+            <div class="chips-row">
+              <button class="chip on" data-act="toggleLayer" data-layer="places">Places</button>
+              <button class="chip on" data-act="toggleLayer" data-layer="events">Events</button>
+              <button class="chip" data-act="openAI" data-from="banner">✨ Suggested for you</button>
+            </div>
+            <div class="results" id="searchResults" hidden></div>
+          </div>
+          <div id="map"></div>
+          <button class="fab" data-act="locate" aria-label="My location">
+            <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="3" fill="currentColor"/><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+          <div class="map-card" id="mapCard" hidden></div>
+        </section>
+
+        <!-- 3 Place card -->
+        <section class="screen overlay" id="s-place"></section>
+
+        <!-- 4 Events -->
+        <section class="screen" id="s-events"></section>
+
+        <!-- 5 My Day -->
+        <section class="screen" id="s-myday"></section>
+
+        <!-- 6 Profile -->
+        <section class="screen" id="s-profile"></section>
+      </main>
+
+      <nav class="tabbar" id="tabbar">
+        <button data-act="go" data-screen="map" class="tab on"><i>🗺️</i><span>Map</span></button>
+        <button data-act="go" data-screen="events" class="tab"><i>📅</i><span>Events</span></button>
+        <button data-act="go" data-screen="myday" class="tab"><i>✅</i><span>My Day</span><b id="mydayBadge" hidden>0</b></button>
+        <button data-act="go" data-screen="profile" class="tab"><i>👤</i><span>Profile</span></button>
+      </nav>
+
+      <div class="backdrop" id="backdrop" hidden></div>
+      <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true"></div>
+      <div class="toast" id="toast" hidden></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="js/data.js"></script>
+  <script src="js/planner.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
