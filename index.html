@@ -252,6 +252,18 @@ h1{letter-spacing:-.3px}
 .ecp{padding:3px 12px;border-radius:999px;font-size:13px;font-weight:700;background:color-mix(in srgb,var(--gold) 28%,var(--surf));color:var(--ink)}
 .ecp.free{background:color-mix(in srgb,var(--teal) 18%,var(--surf));color:var(--teal)}
 @media (max-width:820px){.ecard{grid-template-columns:70px minmax(0,1fr)}.eca{grid-column:1/-1;justify-items:stretch;padding:0 14px 14px;grid-template-columns:auto 1fr;align-items:center}.eca .row{justify-content:flex-end}}
+
+/* ===== AI-помощник ===== */
+.aihd{display:flex;gap:12px;align-items:flex-start}
+.aiav{flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--grad);box-shadow:0 6px 18px rgba(15,110,140,.4);animation:aiglow 2.6s ease-in-out infinite}
+.aiav svg,.aibtn svg{width:22px;height:22px;fill:currentColor;color:#fff}
+.aibtn svg{width:16px;height:16px;color:currentColor;margin-right:6px;vertical-align:-2px}
+.aitag{display:inline-block;padding:1px 8px;margin-left:4px;border-radius:999px;background:var(--grad);color:#fff;font-size:11px;font-weight:700;letter-spacing:.06em;vertical-align:2px}
+.aib{margin-top:14px;padding:12px 14px;border-radius:14px;border-left:4px solid var(--pri);background:color-mix(in srgb,var(--pri) 9%,var(--surf));font-size:14px;animation:rise .5s both}
+.dots{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}
+.dots i{width:5px;height:5px;border-radius:50%;background:currentColor;animation:dot 1s infinite}.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-4px);opacity:1}}
+@keyframes aiglow{50%{box-shadow:0 6px 28px rgba(43,163,184,.75)}}
 </style>
 </head>
 <body>
@@ -591,11 +603,11 @@ function day(){const l=(S.day[S.date]||[]).slice().sort((a,b)=>a.t-b.t);S.day[S.
 return`<div class="page"><h1>Мой день · ${10+S.date} ноября</h1>${strip()}<div class="grid2"><section>
 <div class="stats"><div><b>${l.length}</b><span class="mut">остановок</span></div><div><b>${hrs}</b><span class="mut">часов</span></div><div><b class="rkm" data-m="mm1">${route(l).toFixed(1)}</b><span class="mut">км</span></div></div>
 <div class="tl">${l.length?items(l,'day'):'<div class="card mut">Здесь пока пусто. Добавьте места с карты или события из ленты, либо соберите маршрут справа.</div>'}</div>${mini(l,'mm1')}</section>
-<section class="card"><h2>Собрать маршрут</h2><p class="mut" style="margin-top:4px">Город маршрута: ${CN(S.city)}. Его можно сменить в меню сверху.</p><div class="row" style="margin:14px 0"><label class="fld">С<select class="sel" onchange="P.s=+this.value">${opt(6,20,P.s)}</select></label><label class="fld">До<select class="sel" onchange="P.e=+this.value">${opt(8,23,P.e)}</select></label></div>
+<section class="card"><div class="aihd"><span class="aiav">${SPARK}</span><div><h2>AI-помощник <span class="aitag">AI</span></h2><p class="mut" style="margin-top:2px">Составит маршрут по вашим часам, бюджету и интересам. Город: ${CN(S.city)}, его можно сменить в меню сверху.</p></div></div><div class="row" style="margin:14px 0"><label class="fld">С<select class="sel" onchange="P.s=+this.value">${opt(6,20,P.s)}</select></label><label class="fld">До<select class="sel" onchange="P.e=+this.value">${opt(8,23,P.e)}</select></label></div>
 <label class="fld">Бюджет на события<input type="range" min="0" max="15000" step="500" value="${P.b}" oninput="this.nextElementSibling.textContent=money(this.value)" onchange="P.b=+this.value"><b style="color:var(--ink)">${money(P.b)}</b></label>
 <div class="row" style="margin:14px 0">${Object.entries(CAT).map(([k,[n,e]])=>`<button class="chip ${P.ints.has(k)?'on':''}" onclick="tg(P.ints,'${k}');R()">${e} ${n}</button>`).join('')}</div>
-<button class="btn gold" style="width:100%" onclick="gen(false)">Собрать маршрут</button>
-${pv?(pv.length?`<div class="tl">${items(pv,'plan')}</div>${mini(pv,'mm2')}<p class="mut" style="margin-top:10px">${pv.length} остановок · <span class="rkm" data-m="mm2">${route(pv).toFixed(1)}</span> км</p><div class="row" style="margin-top:12px"><button class="btn" onclick="accept()">Принять</button><button class="btn ghost" onclick="gen(true)">Заново</button></div>`:'<p class="mut" style="margin-top:14px">В это время ничего не нашлось. Расширьте часы или увеличьте бюджет.</p>'):''}</section></div></div>`}
+<button class="btn gold aibtn" style="width:100%" ${P.think?'disabled':''} onclick="gen(false)">${P.think?'AI-помощник думает<span class="dots"><i></i><i></i><i></i></span>':SPARK+' Составить маршрут с AI'}</button>
+${pv?(pv.length?`<div class="aib"><b>AI-помощник:</b> составил маршрут из ${pv.length} остановок с учётом ваших интересов (${[...P.ints].map(k=>CAT[k][0]).join(', ')||'любые'}), времени ${pad(P.s)}:00–${pad(P.e)}:00 и бюджета ${money(P.b)}.</div><div class="tl">${items(pv,'plan')}</div>${mini(pv,'mm2')}<p class="mut" style="margin-top:10px">${pv.length} остановок · <span class="rkm" data-m="mm2">${route(pv).toFixed(1)}</span> км</p><div class="row" style="margin-top:12px"><button class="btn" onclick="accept()">Принять</button><button class="btn ghost" onclick="gen(true)">Предложить другой</button></div>`:'<p class="mut" style="margin-top:14px">В это время ничего не нашлось. Расширьте часы или увеличьте бюджет.</p>'):''}</section></div></div>`}
 /* favorites */
 const isF=k=>S.fav.includes(k);
 function fav(k){const i=S.fav.indexOf(k);i<0?S.fav.push(k):S.fav.splice(i,1);sv();
@@ -749,6 +761,10 @@ return`<div class="awsum"><span style="opacity:.9">Ваши награды</span
 <div class="awg">${list.map((a,i)=>`<div class="aw t-${a.t} ${a.v>=a.m?'ok':''}" style="--i:${i}"><div class="medal"><svg viewBox="0 0 24 24">${AI[a.ic]}</svg></div><b>${a.n}</b><span class="mut">${a.d}</span><div class="bar"><i style="width:${a.v/a.m*100}%"></i></div><small>${a.v>=a.m?'Получено':a.v+' / '+a.m}</small></div>`).join('')||'<div class="card mut">Здесь пока пусто.</div>'}</div>`}
 const _me=me;me=function(){const pt=S.pt||'info',H='<div class="page" style="max-width:860px">',tabs=`<div class="seg2"><button class="${pt=='info'?'on':''}" onclick="setPT('info')">Профиль</button><button class="${pt=='awards'?'on':''}" onclick="setPT('awards')">Награды</button></div>`;
 return pt=='awards'?H+tabs+awardsPage()+'</div>':_me().replace(H,H+tabs)};
+
+/* ===== AI-помощник ===== */
+const SPARK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg>';
+const _gen=gen;gen=function(re){if(P.think)return;P.think=true;R();setTimeout(()=>{P.think=false;_gen(re)},1100)};
 R();ob();au();initCloud();
 </script>
 </body>
