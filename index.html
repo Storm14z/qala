@@ -1,87 +1,648 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Qala — Smart City Guide &amp; Event Hub (prototype)</title>
-  <meta name="description" content="Clickable prototype of Qala: one app, one map, everything happening in Astana.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%233b82f6'/%3E%3Ctext x='50' y='68' font-size='56' text-anchor='middle' fill='white' font-family='Arial' font-weight='700'%3EQ%3C/text%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Qala</title>
+<meta name="theme-color" content="#0F6E8C">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F3F5F6;--surf:#fff;--ink:#1A2730;--mut:#5E6B74;--line:#D5DCE0;--pri:#0F6E8C;--onpri:#fff;--gold:#E9B824;--teal:#2F855A;--land:#E9EEF0;--f:"Golos Text",system-ui,sans-serif;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#11191E;--surf:#19242B;--ink:#E6ECEF;--mut:#9AA8B0;--line:#2B3A43;--pri:#4FB3D1;--onpri:#0B1418;--teal:#48BB78;--land:#223039}}
+:root[data-theme="dark"]{--bg:#11191E;--surf:#19242B;--ink:#E6ECEF;--mut:#9AA8B0;--line:#2B3A43;--pri:#4FB3D1;--onpri:#0B1418;--teal:#48BB78;--land:#223039}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--f);display:grid;grid-template-rows:auto minmax(0,1fr)}
+button,input,select{font-family:var(--f)}
+button{font-size:inherit;color:inherit;cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+nav{display:flex;align-items:stretch;gap:2px;background:var(--surf);border-bottom:1px solid var(--line);padding:0 clamp(12px,2vw,28px);overflow-x:auto;z-index:5}
+.logo{font-weight:700;font-size:20px;display:flex;align-items:baseline;gap:8px;padding:12px 24px 12px 0;white-space:nowrap}
+.logo small{font-weight:400;font-size:13px;color:var(--mut)}
+.tab{padding:14px 12px 11px;font-weight:500;color:var(--mut);border-bottom:3px solid transparent;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab.on{color:var(--ink);font-weight:700;border-bottom-color:var(--pri)}
+main{position:relative;isolation:isolate;min-width:0;min-height:0;overflow:hidden}
+#lm{position:absolute;inset:0;background:var(--land)}
+#ui{position:absolute;inset:0;z-index:1000;pointer-events:none}
+.page,.panel,.top>*{pointer-events:auto}
+.page{height:100%;overflow:auto;padding:24px clamp(14px,3vw,40px) 40px}
+h1{font-size:26px;line-height:1.2;font-weight:700}
+h2{font-size:17px;font-weight:700}
+.mut{color:var(--mut)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:3px;vertical-align:0}
+.chip{padding:6px 12px;border:1px solid var(--line);background:var(--surf);border-radius:4px;font-size:14px;white-space:nowrap}
+.chip.on{background:var(--ink);color:var(--surf);border-color:var(--ink)}
+.btn{padding:9px 16px;border-radius:5px;background:var(--pri);color:var(--onpri);font-weight:600;white-space:nowrap;flex:none}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn.gold{background:var(--gold);color:#1A2730}
+.btn.sm{padding:5px 10px;font-size:13px;border-radius:4px}
+.btn[disabled]{opacity:.4;cursor:default}
+.btn.add{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:0 20px}
+.btn.add.sm{min-height:34px;padding:0 12px}
+.btn.add svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:6px;padding:16px}
+.top{position:absolute;top:14px;left:14px;right:14px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none;max-width:660px;z-index:1000}
+.search{flex:1 1 220px;padding:9px 12px;border-radius:5px;border:1px solid var(--line);background:var(--surf);color:var(--ink);font-size:15px}
+.panel{position:absolute;top:14px;right:14px;bottom:14px;width:370px;max-width:calc(100% - 28px);background:var(--surf);border:1px solid var(--line);border-radius:8px;overflow:auto;box-shadow:0 4px 18px rgba(10,25,35,.2);z-index:1000}
+.art{padding:9px 48px 9px 18px;color:#fff;font-weight:600;font-size:13px}
+.pb{padding:18px;display:grid;gap:12px}
+.x{position:absolute;top:5px;right:8px;width:32px;height:32px;font-size:22px;color:#fff;z-index:2}
+.tag{padding:2px 9px;border-radius:3px;background:var(--land);font-size:13px}
+.quote{border-left:3px solid var(--gold);padding-left:12px;color:var(--mut)}
+.days{display:flex;gap:6px;margin:16px 0 12px;overflow:auto}
+.day{min-width:58px;padding:7px 0;border:1px solid var(--line);background:var(--surf);border-radius:4px;display:grid;justify-items:center;color:var(--mut);font-size:13px}
+.day b{font-size:19px;color:var(--ink);font-weight:700;line-height:1.2}
+.day.on{background:var(--pri);border-color:var(--pri);color:var(--onpri)}.day.on b{color:var(--onpri)}
+.list{display:grid;margin-top:16px;max-width:760px;background:var(--surf);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.list:not(:has(*)){display:none}
+.list.tks{background:none;border:0;gap:12px;overflow:visible}
+.ev{display:grid;grid-template-columns:64px 1fr auto;gap:14px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.ev:last-child{border-bottom:0}
+.ev .t{font-weight:700;font-size:17px}
+.ev.fr{grid-template-columns:40px 1fr auto}
+.ev.ef{grid-template-columns:72px 1fr auto}
+.sq{width:40px;height:40px;border-radius:5px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:22px;margin-top:16px;align-items:start}
+.stats{display:flex;gap:24px;margin-top:6px}.stats b{font-size:22px;display:block;line-height:1.2}
+.tl{display:grid;gap:8px;margin-top:14px}
+.it{display:grid;grid-template-columns:54px 1fr auto;gap:12px;align-items:center;padding:10px 12px;background:var(--surf);border:1px solid var(--line);border-radius:6px}
+.it.done{border-color:var(--teal)}
+.gap{font-size:12px;color:var(--mut);padding-left:66px}
+.sel{padding:8px 10px;border-radius:4px;border:1px solid var(--line);background:var(--surf);color:var(--ink);font-size:14px}
+input[type=range]{width:100%;accent-color:var(--pri)}
+.fld{display:grid;gap:5px;font-weight:500;font-size:13px;color:var(--mut)}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:12px}
+.bd{padding:14px;border:1px solid var(--line);border-radius:6px;background:var(--surf);display:grid;gap:2px;font-size:14px}
+.bd.lock{opacity:.6}
+.bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;background:var(--gold)}
+.ava{width:68px;height:68px;border-radius:50%;background:var(--pri);color:var(--onpri);display:grid;place-items:center;font-size:24px;font-weight:700}
+#ob{position:fixed;inset:0;background:var(--bg);z-index:20;display:grid;place-items:center;padding:20px;overflow:auto}
+#au{position:fixed;inset:0;background:var(--bg);z-index:22;display:none;place-items:center;padding:20px;overflow:auto}
+.obc{max-width:500px;width:100%;display:grid;gap:18px}
+.obc .search{width:100%;flex:none}
+.obc .logo{padding:0;font-size:26px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg .chip{padding:14px;text-align:center;font-size:16px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:5px;font-weight:500;opacity:0;pointer-events:none;transition:.2s;z-index:30;max-width:90vw}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.leaflet-container{font:inherit}
+.mk{width:26px;height:26px;border-radius:50%;background:var(--c);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45);position:relative;transition:transform .12s}
+.mk.on{transform:scale(1.35);border-color:#1A2730}.mk.evonly{background:var(--gold);border-radius:4px}.mk.dim{opacity:.2}
+.mk .ev{position:absolute;top:-10px;right:-11px;background:var(--gold);color:#1A2730;font:700 11px var(--f);min-width:18px;height:18px;border-radius:4px;display:grid;place-items:center;padding:0 4px;border:0}
+.me-dot{width:20px;height:20px;border-radius:50%;background:#2A7BFF;border:3px solid #fff;animation:pl 2s infinite}
+@keyframes pl{0%{box-shadow:0 0 0 0 rgba(42,123,255,.55)}100%{box-shadow:0 0 0 22px rgba(42,123,255,0)}}
+#away:empty{display:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}}
+:root[data-theme="dark"] .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
+.fm{width:30px;height:30px;border-radius:50%;background:var(--teal);color:#fff;border:3px solid #fff;display:grid;place-items:center;font:700 13px var(--f);box-shadow:0 1px 5px rgba(0,0,0,.4)}
+.leaflet-tooltip.fl{background:var(--surf);color:var(--ink);border:1px solid var(--line);font:600 13px var(--f);padding:1px 8px;border-radius:4px;box-shadow:none}
+.leaflet-tooltip-right.fl:before{display:none}
+.addf{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end;margin-top:14px}
+.myid{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px;max-width:760px}
+.myid b{font-size:26px;letter-spacing:.08em;font-variant-numeric:tabular-nums}
+.perr{color:#C0392B;font-size:13px;min-height:18px;margin-top:6px}
+.addf>*{min-width:0}.addf .search,.addf .sel{width:100%;height:42px;flex:none}
+.mm{height:300px;border-radius:6px;margin-top:14px;overflow:hidden;isolation:isolate;border:1px solid var(--line)}
+.nm{width:28px;height:28px;border-radius:50%;background:var(--gold);color:#1A2730;font:700 14px var(--f);display:grid;place-items:center;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.4)}
+.tk{display:grid;grid-template-columns:88px 1fr 132px;background:var(--surf);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.tkm{background:var(--pri);color:var(--onpri);display:grid;align-content:center;justify-items:center;padding:14px 6px;text-align:center}
+.tkt{font-weight:700;font-size:19px;margin-top:6px}
+.tkb{padding:14px 16px;display:grid;gap:3px;align-content:center}
+.tkq{border-left:2px dashed var(--line);padding:12px;display:grid;justify-items:center;align-content:center;gap:6px}
+.tkq svg{width:96px;height:96px}
+.tkq small{font-weight:600;font-size:12px;color:var(--mut);letter-spacing:.04em}
+#md{display:none;position:fixed;inset:0;background:rgba(10,20,30,.55);z-index:25;place-items:center;padding:16px;overflow:auto}
+.btn.danger{background:#B3402E;color:#fff}
+.mc .search{width:100%;flex:none}
+.mc{background:var(--surf);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:22px;max-width:420px;width:100%;display:grid;gap:14px}
+@media (max-width:820px){
+ .grid2{grid-template-columns:1fr}
+ .panel{top:auto;left:10px;right:10px;bottom:10px;width:auto;max-width:none;max-height:62%}
+ .top{top:10px;left:10px;right:10px}
+ .addf{grid-template-columns:1fr}.addf .btn.add{width:100%}
+ .ev{grid-template-columns:64px 1fr}.ev>.row:last-child{grid-column:1/-1}
+ .ev.fr{grid-template-columns:40px 1fr}.ev.fr>:last-child{grid-column:1/-1}.ev.fr>.btn:last-child{justify-self:start}
+ .ev.ef{grid-template-columns:64px 1fr}
+ .tk{grid-template-columns:76px 1fr}.tkq{grid-column:1/-1;border-left:0;border-top:2px dashed var(--line);grid-template-columns:auto auto;justify-content:start}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.citysel{margin-left:auto;display:flex;align-items:center;gap:8px;padding-left:16px;font-size:13px;color:var(--mut);white-space:nowrap}
+.citysel .sel{font-size:14px;font-weight:600}
+.cityh{margin-top:22px}.cityh+.list{margin-top:8px}
+.cm{position:absolute;left:0;top:0;transform:translate(-50%,-50%);display:flex;align-items:center;gap:6px;background:var(--ink);color:var(--surf);border:2px solid var(--surf);border-radius:5px;padding:3px 8px;font-size:13px;white-space:nowrap;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.35)}
+.cm span{background:var(--gold);color:#1A2730;border-radius:3px;padding:0 5px;font-size:12px;font-weight:700}
+.cm.on{outline:3px solid var(--gold)}
+
+/* ===== Qala: визуальное обновление ===== */
+:root{--r:12px;--sh:0 6px 24px rgba(15,40,55,.10);--grad:linear-gradient(135deg,#0F6E8C,#2BA3B8 60%,#E9B824)}
+body{background:radial-gradient(900px 500px at 85% -10%,rgba(43,163,184,.15),transparent 60%),radial-gradient(700px 400px at -5% 110%,rgba(233,184,36,.10),transparent 60%),var(--bg)}
+nav{position:relative;background:color-mix(in srgb,var(--surf) 86%,transparent);backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(10,30,40,.06)}
+.logo{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:23px;letter-spacing:.3px}
+.logo small{-webkit-text-fill-color:var(--mut)}
+.tab{position:relative;border-bottom:0;transition:color .2s}
+.tab.on{border-bottom:0}
+.tab::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:var(--pri);transform:scaleX(0);transition:transform .3s cubic-bezier(.3,.9,.3,1)}
+.tab.on::after{transform:scaleX(1)}
+h1{letter-spacing:-.3px}
+.card,.list,.bd,.it,.tk,.mc{border-radius:var(--r)}
+.panel{border-radius:16px;backdrop-filter:blur(8px);animation:slideIn .4s cubic-bezier(.2,.9,.3,1)}
+.card,.bd,.it,.tk{box-shadow:var(--sh);transition:transform .2s,box-shadow .2s}
+.card:hover,.bd:not(.lock):hover,.it:hover,.tk:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(15,40,55,.16)}
+.btn{border-radius:9px;transition:transform .15s,filter .2s,box-shadow .2s}
+.btn:not(.ghost):not(.gold):not(.danger){background:linear-gradient(135deg,var(--pri),color-mix(in srgb,var(--pri) 65%,#6FE0CF))}
+.btn:hover:not([disabled]){filter:brightness(1.08);transform:translateY(-1px)}
+.btn:active:not([disabled]){transform:scale(.95)}
+.btn.gold{background:linear-gradient(135deg,#F2C94C,#E9B824);box-shadow:0 4px 14px rgba(233,184,36,.35)}
+.chip{border-radius:999px;transition:all .18s}
+.chip:hover{transform:translateY(-1px);border-color:var(--pri)}
+.chip.on{box-shadow:0 4px 12px rgba(10,30,40,.25)}
+.search,.sel{border-radius:10px;transition:border-color .2s,box-shadow .2s}
+.search:focus,.sel:focus{outline:0;border-color:var(--pri);box-shadow:0 0 0 3px color-mix(in srgb,var(--pri) 25%,transparent)}
+.day{border-radius:12px;transition:all .2s}
+.day:hover{transform:translateY(-2px)}
+.day.on{box-shadow:0 6px 16px color-mix(in srgb,var(--pri) 45%,transparent)}
+.list .ev{transition:background .2s}
+.list .ev:hover{background:color-mix(in srgb,var(--pri) 7%,var(--surf))}
+.ava{background:var(--grad);box-shadow:0 8px 24px rgba(15,110,140,.35)}
+.tkm{background:var(--grad)}
+.bar i{background:linear-gradient(90deg,var(--gold),#F2C94C);transition:width .8s}
+.mk:hover{transform:scale(1.2)}
+.mc{animation:pop .3s cubic-bezier(.2,1.2,.3,1)}
+.tag{border-radius:999px}
+.anim .page>*,.anim .list>*{animation:rise .5s both cubic-bezier(.2,.8,.3,1)}
+.anim .page>:nth-child(2){animation-delay:0.05s}.anim .list>:nth-child(2){animation-delay:0.18s}.anim .page>:nth-child(3){animation-delay:0.10s}.anim .list>:nth-child(3){animation-delay:0.22s}.anim .page>:nth-child(4){animation-delay:0.15s}.anim .list>:nth-child(4){animation-delay:0.26s}.anim .page>:nth-child(5){animation-delay:0.20s}.anim .list>:nth-child(5){animation-delay:0.30s}.anim .page>:nth-child(6){animation-delay:0.25s}.anim .list>:nth-child(6){animation-delay:0.34s}.anim .page>:nth-child(7){animation-delay:0.30s}.anim .list>:nth-child(7){animation-delay:0.38s}.anim .page>:nth-child(8){animation-delay:0.35s}.anim .list>:nth-child(8){animation-delay:0.42s}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes slideIn{from{opacity:0;transform:translateX(24px)}}
+@keyframes pop{from{opacity:0;transform:scale(.92) translateY(8px)}}
+@keyframes flow{50%{background-position:100% 50%}}
+.fact{display:grid;gap:8px;margin-top:16px;max-width:760px;padding:18px 20px;border-radius:16px;color:#fff;background:var(--grad);background-size:200% 200%;animation:flow 10s ease infinite;box-shadow:0 12px 30px rgba(15,110,140,.28);position:relative;overflow:hidden}
+.fact::after{content:"";position:absolute;right:-40px;top:-50px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.15)}
+.fact small{opacity:.9;font-weight:600;letter-spacing:.07em;text-transform:uppercase;font-size:11px}
+.fact b{font-size:18px;line-height:1.35;font-weight:600;max-width:560px;position:relative;z-index:1}
+.fact .row{position:relative;z-index:1;margin-top:4px}
+.fact .cnt{font-weight:700;font-size:22px}
+.cf{position:fixed;left:50%;bottom:22%;width:9px;height:14px;z-index:40;border-radius:2px;pointer-events:none;animation:cf 1.4s cubic-bezier(.1,.7,.4,1) forwards}
+@keyframes cf{to{transform:translate(var(--x),var(--y)) rotate(var(--rt));opacity:0}}
+</style>
 </head>
 <body>
-  <div class="stage">
-    <aside class="side">
-      <div class="logo-lg">Q</div>
-      <h1>Qala</h1>
-      <p>Smart City Guide &amp; Event Hub for Astana.<br>Clickable ICT Endterm prototype.</p>
-      <ul>
-        <li>Pick a role and interests</li>
-        <li>Explore places and events on the map</li>
-        <li>Build <b>My Day</b> and try <b>Plan with AI</b></li>
-        <li>Check in, earn badges</li>
-      </ul>
-      <button class="btn ghost" data-act="resetDemo">Reset demo data</button>
-    </aside>
+<nav id="nav"></nav>
+<main id="main"><div id="lm"></div><div id="ui"></div></main>
+<div id="ob"></div>
+<div id="au"></div>
+<div id="md" role="dialog" aria-modal="true"></div>
+<div id="toast" role="status"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const COL={Music:'#8B3A68',Tech:'#245E9E',Sport:'#28744C',Art:'#94550F',Business:'#46505E',Food:'#B0481A'};
+const CAT={Music:['Музыка'],Tech:['Технологии'],Sport:['Спорт'],Art:['Искусство'],Business:['Бизнес'],Food:['Еда']};
+Object.keys(CAT).forEach(k=>CAT[k][1]=`<i class="dot" style="background:${COL[k]}"></i>`);
+const PL=[
+{id:'baiterek',n:'Байтерек',lat:51.1284,lng:71.4305,c:'Art',r:4.8,rv:312,a:'бул. Нуржол',du:1,in:0,d:'Символ столицы с панорамой города. Лучше всего на закате.',q:'Потрясающий вид на закате! — Айгерим'},
+{id:'khan',n:'Хан Шатыр',lat:51.132,lng:71.4038,c:'Food',r:4.7,rv:540,a:'пр. Туран, 37',du:2,in:1,d:'Огромный шатёр с кафе, магазинами и пляжем под крышей.',q:'Тепло даже в мороз, хватит на полдня. — Данияр'},
+{id:'museum',n:'Национальный музей',lat:51.1229,lng:71.4327,c:'Art',r:4.7,rv:410,a:'пр. Тәуелсіздік, 54',du:1.5,in:1,d:'История и культура Казахстана в нескольких залах.',q:'Золотой человек стоит того, чтобы прийти. — Мария'},
+{id:'mosque',n:'Мечеть Хазрет Султан',lat:51.1267,lng:71.416,c:'Art',r:4.9,rv:620,a:'пр. Тәуелсіздік',du:1,in:1,d:'Одна из крупнейших мечетей Центральной Азии.',q:'Очень спокойное и красивое место. — Амир'},
+{id:'hub',n:'Astana Hub',lat:51.0905,lng:71.4195,c:'Tech',r:4.5,rv:120,a:'EXPO, павильон C3',du:1.5,in:1,d:'Технопарк со стартапами, лекциями и коворкингом.',q:'Каждую неделю что-то интересное. — Алия'},
+{id:'expo',n:'EXPO парк',lat:51.0892,lng:71.416,c:'Tech',r:4.6,rv:280,a:'пр. Мангилик Ел',du:2,in:0,d:'Территория выставки с шаром Нур Алем и площадками для фестивалей.',q:'Вечером подсветка просто сказка. — Тимур'},
+{id:'emb',n:'Набережная Ишима',lat:51.1245,lng:71.429,c:'Sport',r:4.6,rv:350,a:'вдоль реки Ишим',du:1,in:0,d:'Дорожки для бега и велосипеда, лавочки у воды.',q:'Лучшее место для утренней пробежки. — Салтанат'},
+{id:'dast',n:'Дастархан',lat:51.13,lng:71.42,c:'Food',r:4.6,rv:190,a:'ул. Достык, 12',du:1,in:1,d:'Бешбармак, баурсаки и чай по-домашнему.',q:'Бешбармак как у бабушки. — Ерлан'},
+{id:'plaza',n:'Бизнес-центр Плаза',lat:51.133,lng:71.426,c:'Business',r:4.4,rv:90,a:'пр. Кабанбай батыра',du:1,in:1,d:'Переговорные, кофе-точки и площадка для деловых встреч.',q:'Удобно проводить встречи. — Нурлан'},
+{id:'hall',n:'Концертный зал',lat:51.1237,lng:71.4249,c:'Music',r:4.8,rv:260,a:'пр. Тәуелсіздік, 52',du:1,in:1,d:'Главная сцена города для джаза, классики и рока.',q:'Звук отличный, места все хорошие. — Дина'}];
+const E=(d,t,du,c,n,v,pr)=>({id:`${d}${t}`,d,t,du,c,n,v,pr});
+const EV=[E(0,10,2,'Tech','Воркшоп для стартапов','hub',0),E(0,14,2.5,'Food','Фестиваль уличной еды','expo',0),E(0,19,2,'Music','Вечер джаза','hall',3000),
+E(1,8,1.5,'Sport','Забег по набережной','emb',0),E(1,9,1.5,'Business','Деловой завтрак','plaza',5000),E(1,11,1.5,'Art','Лекция об искусстве','museum',0),E(1,20,2,'Music','Рок-концерт','hall',6000),
+E(2,13,2,'Food','Мастер-класс казахской кухни','dast',4000),E(2,15,3,'Tech','Демо хакатона','hub',0),E(2,19,1.5,'Music','Вечер домбры','hall',2500),
+E(3,9,1,'Sport','Йога у реки','emb',0),E(3,17,2,'Business','Нетворкинг','plaza',2000),E(3,18,2,'Art','Ночь в галерее','museum',1500),E(3,21,3,'Music','Электро-ночь','hall',5000),
+E(4,10,2,'Sport','Велотур по городу','emb',1000),E(4,11,2,'Tech','Митап разработчиков','hub',0),E(4,12,4,'Food','Фермерский рынок','expo',0),E(4,20,2,'Music','Открытый микрофон','hall',2000)];
+const DN=['Вт','Ср','Чт','Пт','Сб'];
+/* ===== Города Казахстана ===== */
+const CITIES=[{id:'astana',n:'Астана',lat:51.1282,lng:71.4307,k:''},{id:'almaty',n:'Алматы',lat:43.2389,lng:76.9454,k:'ala'},{id:'shymkent',n:'Шымкент',lat:42.3167,lng:69.5958,k:'shy'},{id:'karaganda',n:'Караганда',lat:49.8047,lng:73.1094,k:'kar'},{id:'aktobe',n:'Актобе',lat:50.2839,lng:57.167,k:'akb'},{id:'atyrau',n:'Атырау',lat:47.0945,lng:51.9238,k:'aty'},{id:'aktau',n:'Актау',lat:43.6532,lng:51.1975,k:'akt'},{id:'turkestan',n:'Туркестан',lat:43.2973,lng:68.2517,k:'tur'}];
+const CN=id=>(CITIES.find(c=>c.id==id)||CITIES[0]).n;
+const addr=v=>`${v.n}, ${v.a}, ${CN(v.city)}`;
+const cityOpts=sel=>(sel?'':'<option value="" selected disabled>Выберите город</option>')+CITIES.map(c=>`<option value="${c.id}" ${c.id==sel?'selected':''}>${c.n}</option>`).join('');
+const plOpts=sel=>CITIES.map(c=>`<optgroup label="${c.n}">${PL.filter(p=>p.city==c.id).map(p=>`<option value="${p.id}" ${p.id==sel?'selected':''}>${p.n}</option>`).join('')}</optgroup>`).join('');
+PL.forEach(p=>p.city='astana');
+PL.push(
+{id:'alakok',n:'Кок-Тобе',lat:43.2314,lng:76.9753,c:'Art',r:4.8,rv:980,a:'гора Кок-Тобе',du:1.5,in:0,d:'Канатная дорога на смотровую площадку с видом на город и горы.',q:'Вечером весь город как на ладони. — Айдана',city:'almaty'},
+{id:'alamedeu',n:'Каток Медеу',lat:43.1577,lng:77.0589,c:'Sport',r:4.9,rv:1200,a:'урочище Медеу',du:2,in:0,d:'Высокогорный каток и дорога к горнолыжному курорту Шымбулак.',q:'Лёд и горы, лучше места нет. — Руслан',city:'almaty'},
+{id:'alarep',n:'Площадь Республики',lat:43.238,lng:76.9458,c:'Art',r:4.6,rv:540,a:'площадь Республики',du:1,in:0,d:'Главная площадь города с монументом Независимости.',q:'Красиво и вечером, и днём. — Алина',city:'almaty'},
+{id:'alazel',n:'Зелёный базар',lat:43.2602,lng:76.9557,c:'Food',r:4.6,rv:760,a:'ул. Жибек Жолы',du:1.5,in:1,d:'Старейший рынок города: фрукты, специи, курт и горячая кухня.',q:'Берите курт и сухофрукты. — Марат',city:'almaty'},
+{id:'alaopera',n:'Театр оперы и балета имени Абая',lat:43.2567,lng:76.9448,c:'Music',r:4.8,rv:430,a:'ул. Кабанбай батыра',du:2,in:1,d:'Классические спектакли и концерты в историческом здании.',q:'Билеты лучше брать заранее. — Карина',city:'almaty'},
+{id:'alatech',n:'IT-хаб',lat:43.2342,lng:76.9301,c:'Tech',r:4.5,rv:140,a:'центр города',du:1.5,in:1,d:'Коворкинг, лекции и встречи для стартапов.',q:'Хорошее комьюнити. — Дамир',city:'almaty'});
+const TPL={sq:['Центральная площадь',0,0,'Art',4.5,310,'центр города',1,0,'Главная площадь города: праздники, концерты и встречи.','Здесь всегда что-то происходит. — Асем'],
+park:['Городской парк',.004,.011,'Sport',4.6,420,'центр города',1,0,'Аллеи, велодорожки и площадки для отдыха.','Хорошее место для утренней пробежки. — Ержан'],
+mkt:['Центральный рынок',-.004,-.009,'Food',4.4,260,'центр города',1.5,1,'Местные продукты, выпечка и горячая кухня.','Всё свежее и недорого. — Гульнара'],
+mus:['Краеведческий музей',.006,-.004,'Art',4.5,180,'центр города',1.5,1,'История и природа края в нескольких залах.','Интересно и школьникам, и взрослым. — Бауыржан'],
+thr:['Драматический театр',-.003,.006,'Music',4.6,230,'центр города',2,1,'Спектакли и концерты местных и гастролирующих артистов.','Билеты лучше брать заранее. — Томирис'],
+biz:['Бизнес-центр',.002,-.014,'Business',4.3,70,'центр города',1,1,'Площадка для деловых встреч и конференций.','Удобно проводить переговоры. — Арман'],
+hub:['IT-хаб',.008,.005,'Tech',4.4,90,'центр города',1.5,1,'Коворкинг, лекции и митапы для разработчиков.','Тут собираются сильные ребята. — Мадина']};
+const KEYS={shymkent:'sq park mkt mus thr biz hub',karaganda:'sq park mkt mus thr biz hub',aktobe:'sq park mkt mus thr biz hub',atyrau:'sq park mkt mus thr hub',aktau:'sq park mkt mus thr',turkestan:'sq park mkt mus thr'};
+const OV={shymkent:{sq:{n:'Площадь Ордабасы',a:'площадь Ордабасы',d:'Главная площадь Шымкента с монументом и фонтанами.'}},
+atyrau:{park:{n:'Набережная Урала',a:'вдоль реки Урал',d:'Прогулки у реки, велодорожки и кафе на берегу.'}},
+aktau:{park:{n:'Каспийская набережная',a:'вдоль побережья Каспия',d:'Прогулки у моря, закаты и площадки для спорта.'}},
+turkestan:{sq:{n:'Мавзолей Ходжи Ахмеда Яссауи',lat:43.29778,lng:68.27194,a:'центр Туркестана',r:4.9,rv:800,d:'Памятник XIV века и главная святыня города.'}}};
+CITIES.forEach(c=>{if(!KEYS[c.id])return;KEYS[c.id].split(' ').forEach(k=>{const t=TPL[k],o=(OV[c.id]||{})[k]||{};
+PL.push({id:c.k+k,n:o.n||t[0],lat:o.lat??+(c.lat+t[1]).toFixed(5),lng:o.lng??+(c.lng+t[2]).toFixed(5),c:t[3],r:o.r||t[4],rv:o.rv||t[5],a:o.a||t[6],du:t[7],in:t[8],d:o.d||t[9],q:t[10],city:c.id})})});
+const E2=(k,d,t,du,c,n,v,pr)=>({id:`${k}${d}${t}`,d,t,du,c,n,v:k+v,pr});
+EV.push(
+E2('ala',0,10,2,'Sport','Утренний забег к Медеу','medeu',0),E2('ala',0,19,2,'Music','Вечер классики','opera',4000),E2('ala',1,12,2,'Food','Дегустация сыров и курта','zel',1500),E2('ala',1,18,3,'Tech','Митап стартапов','tech',0),
+E2('ala',2,16,2,'Art','Закат на Кок-Тобе: фотопрогулка','kok',2000),E2('ala',2,20,2,'Music','Концерт на площади','rep',0),E2('ala',3,10,3,'Sport','Катание на коньках','medeu',2500),E2('ala',4,11,2,'Business','Бизнес-завтрак','tech',5000),E2('ala',4,19,2,'Music','Балет: вечерний спектакль','opera',7000),
+E2('shy',0,11,2,'Food','Фестиваль шымкентской кухни','mkt',0),E2('shy',0,19,2,'Music','Вечер народной музыки','thr',2000),E2('shy',1,10,1.5,'Sport','Утренняя зарядка в парке','park',0),E2('shy',3,18,2,'Business','Встреча предпринимателей','biz',1500),E2('shy',4,12,3,'Art','День открытых дверей в музее','mus',0),
+E2('kar',0,12,2,'Tech','Митап «Код и кофе»','hub',0),E2('kar',1,19,2,'Music','Концерт в театре','thr',2500),E2('kar',2,10,2,'Sport','Забег по городскому парку','park',0),E2('kar',3,13,2,'Food','Ярмарка местных продуктов','mkt',0),E2('kar',4,17,2,'Art','Выставка художников','mus',500),
+E2('akb',0,10,2,'Sport','Велопробег по городу','park',0),E2('akb',1,19,2,'Music','Вечер джаза','thr',3000),E2('akb',2,15,2,'Tech','Открытый урок по программированию','hub',0),E2('akb',3,12,2,'Food','Гастрофест','mkt',0),E2('akb',4,18,2,'Business','Бизнес-завтрак','biz',3500),
+E2('aty',0,9,1.5,'Sport','Утренняя пробежка по набережной','park',0),E2('aty',1,18,2,'Food','Рыбный фестиваль','mkt',0),E2('aty',2,19,2,'Music','Концерт под открытым небом','sq',0),E2('aty',3,11,2,'Tech','Митап для IT-специалистов','hub',0),E2('aty',4,15,2,'Art','Мастер-класс по живописи','mus',1000),
+E2('akt',0,17,2,'Sport','Закатная прогулка по набережной','park',0),E2('akt',1,19,2,'Music','Вечер у моря','thr',2000),E2('akt',2,12,2,'Food','Дегустация морепродуктов','mkt',3000),E2('akt',3,10,2,'Art','Экскурсия по музею','mus',500),E2('akt',4,16,3,'Sport','Парусная регата: просмотр','park',0),
+E2('tur',0,10,2,'Art','Экскурсия по мавзолею','sq',1500),E2('tur',1,18,2,'Music','Вечер дутара','thr',1500),E2('tur',2,12,2,'Food','Мастер-класс по баурсакам','mkt',1000),E2('tur',3,16,2,'Art','Лекция о Великом Шёлковом пути','mus',0),E2('tur',4,9,2,'Sport','Утренняя прогулка по парку','park',0));
 
-    <div class="phone" id="phone">
-      <main id="screens">
-        <!-- 1 Onboarding -->
-        <section class="screen" id="s-onb"></section>
+/* ===== больше событий ===== */
+EV.push(
+E(0,8,1.5,'Sport','Утренняя зарядка на набережной','emb',0),E(0,16,2,'Art','Экскурсия на смотровую Байтерека','baiterek',2500),E(0,21,2,'Music','Джем-сейшн: открытая сцена','hall',3500),
+E(1,14,2,'Food','Кулинарный баттл шефов','dast',3000),E(1,17,2,'Tech','Лекция об искусственном интеллекте','hub',0),
+E(2,10,1.5,'Sport','Скандинавская ходьба','emb',0),E(2,17,2,'Art','Лекция: тайны Золотого человека','museum',1000),E(2,21,2,'Music','Караоке-вечер','khan',1000),
+E(3,12,2,'Food','Чайный час с баурсаками','dast',1500),E(3,14,2,'Business','Питч-сессия стартапов','plaza',0),
+E(4,15,2,'Art','Экскурсия по мечети','mosque',0),E(4,18,2,'Sport','Закатный забег по EXPO','expo',0),E(4,22,1.5,'Music','Ночной концерт у шара Нур Алем','expo',4000),
+E2('ala',1,9,2,'Sport','Йога на рассвете','rep',0),E2('ala',2,11,2,'Art','Уличная галерея','rep',0),E2('ala',3,19,2,'Music','Джаз на вершине Кок-Тобе','kok',3500),
+E2('shy',2,12,2,'Food','Плов-фест','mkt',1000),E2('shy',2,19,2,'Music','Концерт под звёздами','sq',0),E2('shy',4,18,2,'Tech','Хакатон выходного дня','hub',0),
+E2('kar',1,11,2,'Business','Бизнес-завтрак','biz',3000),E2('kar',3,19,2,'Music','Вечер живой музыки','thr',2000),E2('kar',4,10,2,'Sport','Скандинавская ходьба в парке','park',0),
+E2('akb',1,12,2,'Food','Ярмарка выпечки','mkt',0),E2('akb',3,19,2,'Art','Театральный вечер','thr',2500),E2('akb',4,10,2,'Sport','Утренняя йога в парке','park',0),
+E2('aty',2,10,2,'Sport','Велопрогулка вдоль Урала','park',0),E2('aty',3,18,2,'Music','Вечер этно-музыки','thr',2000),
+E2('akt',0,10,2,'Sport','Зарядка у моря','park',0),E2('akt',2,19,2,'Music','Живой джаз у воды','thr',2500),E2('akt',4,12,2,'Food','Рыбный день','mkt',0),
+E2('tur',0,17,2,'Music','Вечер казахских кюев','thr',1500),E2('tur',2,16,2,'Art','Прогулка по старому городу','sq',1000),E2('tur',3,11,2,'Food','Дегустация национальной кухни','mkt',2500));
+EV.forEach(e=>{e.city=PL.find(p=>p.id==e.v).city});
+const S={ready:false,role:'Турист',city:'astana',home:'',ec:'all',ints:new Set(['Music','Tech']),tab:'map',date:0,sel:null,q:'',lp:true,le:true,fc:'all',day:{},att:0,lf:true,fav:[],tk:[],ff:'all',tt:'mine',buy:null,ask:null,
+fr:[{n:'Данияр',p:'baiterek',s:'любуется закатом'},{n:'Алия',p:'hub',s:'на митапе'},{n:'Тимур',p:'expo',s:'гуляет'},{n:'Мария',p:'museum',s:'в музее'},{n:'Ерлан',p:'dast',s:'обедает'}],
+sg:[{n:'Амина',p:'khan'},{n:'Нурлан',p:'emb'},{n:'Дина',p:'hall'},{n:'Салтанат',p:'mosque'}]};
+/* ID: демо-справочник, хеш для остальных, личный ID при первом входе */
+const DID={'Данияр':'48213907','Алия':'71560284','Тимур':'30948615','Мария':'82417036','Ерлан':'59273841','Амина':'26805193','Нурлан':'64039718','Дина':'17359264','Салтанат':'85021473'};
+const hid=s=>{let h=2166136261;for(const c of s)h=Math.imul(h^c.charCodeAt(0),16777619)>>>0;return String(10000000+h%90000000)};
+const fId=id=>id.slice(0,4)+' '+id.slice(4);
+const newId=()=>{const a=new Uint32Array(1);let id;do{crypto.getRandomValues(a);id=String(10000000+a[0]%90000000)}while(Object.values(DID).includes(id));return id};
+try{const d=JSON.parse(localStorage.getItem('qala_fr')||'null');if(d){if(Array.isArray(d.fr)&&Array.isArray(d.sg)){S.fr=d.fr;S.sg=d.sg}if(Array.isArray(d.fav))S.fav=d.fav;if(Array.isArray(d.tk))S.tk=d.tk}}catch(e){}
+[...S.fr,...S.sg].forEach(f=>{if(!/^\d{8}$/.test(f.id||''))f.id=DID[f.n]||hid(f.n)});
+let MYID='';try{MYID=localStorage.getItem('qala_id')||''}catch(e){}
+if(!/^\d{8}$/.test(MYID)){MYID=newId();try{localStorage.setItem('qala_id',MYID)}catch(e){}}
+/* ===== Supabase (облако) =====
+   Пока SB_URL и SB_KEY пустые, сайт работает в демо-режиме (данные только в браузере).
+   Вставьте сюда адрес проекта и ПУБЛИЧНЫЙ ключ anon. Ключ service_role сюда нельзя никогда. */
+const SB_URL='';
+const SB_KEY='';
+let sb=null;try{if(SB_URL&&SB_KEY&&window.supabase)sb=window.supabase.createClient(SB_URL,SB_KEY)}catch(e){}
+const CLOUD=!!sb;
+let UID=null,PNAME='Айгерим К.',MYLOC='',LASTDAY='',FSIG='',POLL=null,LOADING=false,AUTHR=false;
+const AUTH={mode:'in',msg:'',busy:false};
+S.inc=[];S.out=[];
+if(!CLOUD)try{const n=localStorage.getItem('qala_name');if(n)PNAME=n.slice(0,30);const h=localStorage.getItem('qala_home');if(CITIES.some(c=>c.id==h)){S.home=h;S.city=h;S.role='Житель'}}catch(e){}
+const nmv=()=>S.nm!=null?S.nm:PNAME;
+function finishOb(){const v=nmv().trim().slice(0,30);if(!v||!S.ints.size)return;PNAME=v;S.nm=null;
+if(!CLOUD)try{localStorage.setItem('qala_name',v)}catch(e){}
+if(S.role=='Житель'&&S.home)S.city=S.home;persistHome();S.ready=true;S.tab='map';saveProf();ob();R();goCity()}
+const ini=n=>([...String(n).trim()][0]||'?').toUpperCase();
+const inits=n=>String(n).trim().split(/\s+/).slice(0,2).map(ini).join('');
+const errRu=e=>{const m=String(e&&e.message||e);return /Invalid login/i.test(m)?'Неверная почта или пароль':/already registered/i.test(m)?'Эта почта уже зарегистрирована':/Password should|weak/i.test(m)?'Пароль слишком простой, нужно минимум 8 символов':/rate limit|too many/i.test(m)?'Слишком много попыток, подождите немного':/not confirmed/i.test(m)?'Подтвердите почту по ссылке из письма':'Не удалось выполнить. Попробуйте ещё раз'};
+function au(){const a=$('#au');if(!CLOUD||UID){a.style.display='none';return}
+if(!AUTHR){a.style.display='grid';a.innerHTML='<p class="mut">Загрузка…</p>';return}
+const up=AUTH.mode=='up';a.style.display='grid';
+a.innerHTML=`<form class="obc" onsubmit="authGo(event)"><div class="logo">Qala</div><h1>${up?'Регистрация':'Вход'}</h1>
+<p class="mut">После регистрации у вас появится личный 8-значный ID. По нему друзья смогут вас добавить.</p>
+${up?'<label class="fld">Имя<input class="search" id="an" maxlength="30" autocomplete="name" required></label>':''}
+<label class="fld">Почта<input class="search" id="ae" type="email" autocomplete="email" required></label>
+<label class="fld">Пароль, от 8 символов<input class="search" id="ap" type="password" minlength="8" autocomplete="${up?'new-password':'current-password'}" required></label>
+<div class="perr" role="alert">${esc(AUTH.msg)}</div>
+<button class="btn" ${AUTH.busy?'disabled':''}>${up?'Создать аккаунт':'Войти'}</button>
+<button type="button" class="btn ghost" onclick="AUTH.mode='${up?'in':'up'}';AUTH.msg='';au()">${up?'У меня уже есть аккаунт':'Создать аккаунт'}</button></form>`}
+async function authGo(ev){ev.preventDefault();if(AUTH.busy)return;
+const em=$('#ae').value.trim(),pw=$('#ap').value,nm=$('#an')?$('#an').value.trim():'';AUTH.busy=true;AUTH.msg='';let ok=false;
+try{if(AUTH.mode=='up'){const{data,error}=await sb.auth.signUp({email:em,password:pw,options:{data:{name:nm}}});if(error)throw error;
+if(data.session)ok=true;else{AUTH.mode='in';AUTH.msg='Мы отправили письмо. Подтвердите почту и войдите.'}}
+else{const{error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error;ok=true}}
+catch(e){AUTH.msg=errRu(e)}
+AUTH.busy=false;if(ok)return;au();const f=$('#ae');if(f)f.value=em}
+function outAll(){UID=null;clearInterval(POLL);Object.assign(S,{home:'',city:'astana',nm:null,ready:false,fav:[],tk:[],fr:[],sg:[],inc:[],out:[],day:{},att:0,sel:null,tab:'map'});P.res=null;LASTDAY='';FSIG='';MYLOC='';R();ob();au()}
+async function loadAll(user){LOADING=true;const uid=user.id;
+try{const[pr,fv,tk,dp,lc]=await Promise.all([
+loadProfile(uid),
+sb.from('favorites').select('key'),sb.from('tickets').select('code,event_id,qty'),
+sb.from('day_plans').select('plans,att').eq('user_id',uid).maybeSingle(),
+sb.from('locations').select('place').eq('user_id',uid).maybeSingle()]);
+if(pr.error||!pr.data)throw pr.error||new Error('no profile');
+UID=uid;MYID=pr.data.public_id;PNAME=pr.data.name;S.nm=null;S.role=pr.data.role==='Житель'?'Житель':'Турист';S.home=CITIES.some(c=>c.id==pr.data.city)?pr.data.city:'';if(S.role=='Житель'&&S.home)S.city=S.home;
+const ints=(pr.data.interests||[]).filter(k=>CAT[k]);S.ints=new Set(ints.length?ints:['Music','Tech']);P.ints=new Set(S.ints);S.ready=ints.length>0;
+S.fav=(fv.data||[]).map(x=>x.key);S.tk=(tk.data||[]).map(x=>({id:x.event_id,q:x.qty,code:x.code}));
+const pl=(dp.data&&dp.data.plans)||{};S.day={};Object.keys(pl).forEach(k=>{if(Array.isArray(pl[k]))S.day[k]=pl[k].filter(i=>i&&(i.k=='p'||i.k=='e')&&obj(i))});
+S.att=(dp.data&&dp.data.att)||0;LASTDAY=JSON.stringify([S.day,S.att]);MYLOC=lc.data&&lc.data.place||'';
+S.sel=null;S.tab='map';await fetchFriends();
+clearInterval(POLL);POLL=setInterval(()=>{if(document.visibilityState=='visible')loadFriends()},20000);
+au();ob();R()}
+catch(e){toast('Не удалось загрузить данные. Войдите ещё раз');sb.auth.signOut()}
+finally{LOADING=false}}
+function initCloud(){if(!CLOUD){if(SB_URL&&SB_KEY)toast('Supabase не загрузился, включён демо-режим');return}
+sb.auth.onAuthStateChange((ev,ses)=>{setTimeout(()=>{AUTHR=true;if(ses&&ses.user){if(UID!==ses.user.id&&!LOADING)loadAll(ses.user)}else outAll()},0)})}
+function saveProf(){if(!CLOUD||!UID)return;const base={name:PNAME,role:S.role,interests:[...S.ints]},city=S.role=='Житель'&&S.home?S.home:null;
+sb.from('profiles').update({...base,city}).eq('id',UID).then(r=>{if(!r.error)return;const er=r.error;if(/city/i.test(er.message||'')||er.code=='42703'||er.code=='PGRST204'){sb.from('profiles').update(base).eq('id',UID).then(r2=>{if(r2.error)toast('Не удалось сохранить интересы')});return}toast('Не удалось сохранить интересы')})}
+async function loadProfile(uid){let r=await sb.from('profiles').select('public_id,name,role,interests,city').eq('id',uid).single();if(r.error&&(/city/i.test(r.error.message||'')||r.error.code=='42703'))r=await sb.from('profiles').select('public_id,name,role,interests').eq('id',uid).single();return r}
+async function rename(){const v=(prompt('Ваше имя',PNAME)||'').trim().slice(0,30);if(!v)return;if(CLOUD){const{error}=await sb.from('profiles').update({name:v}).eq('id',UID);if(error)return toast('Не удалось сохранить имя')}else try{localStorage.setItem('qala_name',v)}catch(e){}
+PNAME=v;toast('Имя обновлено');R()}
+function syncDay(){if(!CLOUD||!UID)return;const j=JSON.stringify([S.day,S.att]);if(j===LASTDAY)return;LASTDAY=j;clearTimeout(syncDay.h);
+syncDay.h=setTimeout(()=>{sb.from('day_plans').upsert({user_id:UID,plans:S.day,att:S.att,updated_at:new Date().toISOString()}).then(r=>{if(r.error)toast('Не удалось сохранить план дня')})},800)}
+async function fetchFriends(){
+const fs=await sb.from('friendships').select('id,requester,addressee,addressee_pid,status');if(fs.error)return false;
+const rows=fs.data||[],oth=r=>r.requester==UID?r.addressee:r.requester,ids=rows.map(oth),pm={},lm={};
+if(ids.length){const[p,l]=await Promise.all([sb.from('profiles').select('id,public_id,name').in('id',ids),sb.from('locations').select('user_id,place,status').in('user_id',ids)]);
+if(p.error||l.error)return false;(p.data||[]).forEach(x=>pm[x.id]=x);(l.data||[]).forEach(x=>lm[x.user_id]=x)}
+const fr=[],inc=[],out=[];
+rows.forEach(r=>{const o=oth(r),pf=pm[o];
+if(r.status=='accepted'){if(pf){const lc=lm[o];fr.push({uid:o,id:pf.public_id,n:pf.name,p:lc&&PL.some(x=>x.id==lc.place)?lc.place:null,s:lc&&lc.status||''})}}
+else if(r.addressee==UID){if(pf)inc.push({rid:r.id,id:pf.public_id,n:pf.name})}
+else out.push({uid:o,rid:r.id,id:r.addressee_pid})});
+fr.sort((a,b)=>a.n.localeCompare(b.n,'ru'));
+const sig=JSON.stringify([fr,inc,out]);S.fr=fr;S.inc=inc;S.out=out;const ch=sig!==FSIG;FSIG=sig;return ch}
+async function loadFriends(){const ch=await fetchFriends();if(!ch||!UID||!(S.tab=='friends'||S.tab=='map'))return;
+const t=document.activeElement&&document.activeElement.tagName;if(t=='INPUT'||t=='SELECT'||t=='TEXTAREA'){FSIG='';return}R()}
+async function setMyLoc(v){if(v&&!PL.some(p=>p.id==v))return;
+const{error}=await sb.from('locations').upsert({user_id:UID,place:v||null,status:v?'сейчас здесь':null,updated_at:new Date().toISOString()});
+if(error)return toast('Не удалось обновить место');MYLOC=v;toast(v?'Друзья видят, где вы':'Вы скрыли своё место')}
+async function addFc(id,er){const b=$('#fb');b.disabled=true;const{data,error}=await sb.rpc('send_friend_request',{target:id});
+const M={sent:'Запрос отправлен. Друг увидит его в своём списке',accepted:'Вы теперь друзья',exists:'Этот друг уже добавлен',exists_pending:'Запрос уже отправлен, ждём ответа',not_found:'Пользователь с таким ID не найден',self:'Это ваш собственный ID',rate_limited:'Слишком много попыток. Подождите около часа',invalid:'ID состоит из 8 цифр'};
+if(error){b.disabled=false;return er('Не удалось отправить запрос. Попробуйте позже')}
+if(data=='sent'||data=='accepted'){toast(M[data]);const i=$('#fi');i.value='';i.blur();return loadFriends()}
+b.disabled=false;er(M[data]||'Не удалось добавить')}
+async function respF(rid,ok){const{error}=await sb.rpc('respond_friend_request',{req:rid,accept:ok});if(error)return toast('Не удалось выполнить');toast(ok?'Друг добавлен':'Запрос отклонён');loadFriends()}
+async function cancelF(i){const o=S.out[i];if(!o)return;const{error}=await sb.rpc('remove_friend',{other:o.uid});if(error)return toast('Не удалось отменить');toast('Запрос отменён');loadFriends()}
+function friendsCloud(){
+const loc='<option value="">Не показывать друзьям</option>'+plOpts(MYLOC);
+const inc=S.inc.length?`<h2 style="margin-top:26px">Запросы в друзья</h2><div class="list">${S.inc.map(r=>`<div class="ev fr"><div class="fm" style="background:var(--mut)">${esc(ini(r.n))}</div><div><b>${esc(r.n)}</b><div class="mut" style="font-size:12px">ID ${fId(String(r.id))}</div></div><div class="row"><button class="btn sm" onclick="respF(${Number(r.rid)},true)">Принять</button><button class="btn sm ghost" onclick="respF(${Number(r.rid)},false)">Отклонить</button></div></div>`).join('')}</div>`:'';
+const fr=S.fr.map((f,i)=>`<div class="ev fr"><div class="fm">${esc(ini(f.n))}</div><div><b>${esc(f.n)}</b>${f.s?`<span class="mut"> · ${esc(f.s)}</span>`:''}<div class="mut" style="font-size:12px">ID ${fId(String(f.id))}${f.p?' · '+esc(PL.find(x=>x.id==f.p).n):' · место скрыто'}</div></div><div class="row">${f.p?`<button class="btn sm" onclick="seeF('${f.p}')">На карте</button><button class="btn sm gold" onclick="addP('${f.p}')">Пойти туда</button>`:''}<button class="btn sm ghost" aria-label="Удалить из друзей" onclick="delF(${i})">×</button></div></div>`).join('')||'<div class="card mut">Друзей пока нет. Добавьте первого по ID ниже.</div>';
+const out=S.out.length?`<h2 style="margin-top:26px">Ждут ответа</h2><div class="list">${S.out.map((o,i)=>`<div class="ev fr"><div class="fm" style="background:var(--mut)">?</div><div><b>ID ${fId(String(o.id))}</b><div class="mut" style="font-size:12px">Запрос отправлен</div></div><button class="btn sm ghost" onclick="cancelF(${i})">Отменить</button></div>`).join('')}</div>`:'';
+return`<div class="page" style="max-width:860px"><h1>Друзья</h1><p class="mut" style="margin-top:6px">Друзья видят ваше место только после того, как примут ваш запрос.</p>
+<div class="card" style="margin-top:16px;max-width:760px"><h2>Ваш ID</h2><div class="myid" style="margin-top:8px"><b>${fId(MYID)}</b><button class="btn sm ghost" onclick="copyId()">Копировать</button></div><label class="fld" style="margin-top:14px">Где вы сейчас<select class="sel" onchange="setMyLoc(this.value)">${loc}</select></label></div>
+${inc}<h2 style="margin-top:26px">Друзья</h2><div class="list">${fr}</div>${out}
+<div class="card" style="margin-top:22px;max-width:760px"><h2>Добавить друга по ID</h2><div class="addf"><label class="fld">8-значный ID друга<input class="search" id="fi" inputmode="numeric" maxlength="9" placeholder="0000 0000" autocomplete="off" oninput="fmtId(this)" onkeydown="if(event.key=='Enter'&&!$('#fb').disabled)addF()"></label><button class="btn add" id="fb" disabled onclick="addF()">${PLUS}Добавить</button></div><div id="ferr" class="perr" role="alert"></div></div></div>`}
+const sv=()=>{if(CLOUD)return;try{localStorage.setItem('qala_fr',JSON.stringify({fr:S.fr,sg:S.sg,fav:S.fav,tk:S.tk}))}catch(e){}};
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const P={s:10,e:21,b:8000,ints:new Set(['Music','Tech']),ex:new Set(),j:0,res:null};
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const fT=t=>`${pad(Math.floor(t))}:${pad(Math.round((t%1)*60))}`;
+const money=v=>v>0?`${Number(v).toLocaleString('ru-RU')} ₸`:'бесплатно';
+const obj=i=>i.k=='p'?PL.find(p=>p.id==i.id):EV.find(e=>e.id==i.id);
+const ven=i=>i.k=='p'?obj(i):PL.find(p=>p.id==obj(i).v);
+const km=(a,b)=>{const r=Math.PI/180,dl=(b.lat-a.lat)*r,dn=(b.lng-a.lng)*r,h=Math.sin(dl/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dn/2)**2;return 12742*Math.asin(Math.sqrt(h))};
+/* Маршруты по улицам: пешеходный OSRM на данных OpenStreetMap (routing.openstreetmap.de).
+   Если сервис не ответил, на карте остаётся пунктир по прямой, а расстояние считается приблизительно. */
+const ROAD='https://routing.openstreetmap.de/routed-foot/route/v1/foot/';
+const RC={},RQ={},RF={},LG={},GK={};
+const lk=(a,b)=>`${a.lat.toFixed(5)},${a.lng.toFixed(5)}|${b.lat.toFixed(5)},${b.lng.toFixed(5)}`;
+const same=(a,b)=>a.lat==b.lat&&a.lng==b.lng;
+const legD=(a,b)=>{const g=LG[lk(a,b)];return g?g.d:km(a,b)};
+const route=its=>its.reduce((s,it,n)=>n?s+legD(ven(its[n-1]),ven(it)):0,0);
+function gapText(a,b){const d=km(a,b);if(d>60)return`другой город, ≈ ${Math.round(d)} км`;const g=LG[lk(a,b)];
+return g?`${g.d.toFixed(1)} км · ${Math.max(1,Math.round(g.t))} мин пешком`:`≈ ${d.toFixed(1)} км · ${Math.max(3,Math.round(d*12))} мин в пути`}
+function refreshGaps(){document.querySelectorAll('.gap[data-k]').forEach(g=>{const p=GK[g.dataset.k];if(p)g.textContent=gapText(p[0],p[1])})}
+/* делим остановки на отрезки внутри одного города и строим для каждого путь по улицам */
+function runsOf(l){const vs=l.map(ven),runs=[];let cur=[];vs.forEach((v,i)=>{if(i&&km(vs[i-1],v)>40){if(cur.length)runs.push(cur);cur=[]}
+if(!cur.length||!same(cur[cur.length-1],v))cur.push(v)});if(cur.length)runs.push(cur);return runs.filter(r=>r.length>1)}
+function roadRun(wp){const key=wp.map(v=>v.lng.toFixed(5)+','+v.lat.toFixed(5)).join(';');
+if(RC[key])return Promise.resolve(RC[key]);if(RQ[key])return RQ[key];if(RF[key]&&Date.now()-RF[key]<60000)return Promise.resolve(null);
+RQ[key]=(async()=>{const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),9000);
+try{const r=await fetch(ROAD+key+'?overview=full&geometries=geojson&steps=false',{signal:ctl.signal});if(!r.ok)throw new Error('http');
+const j=await r.json();if(j.code!=='Ok'||!j.routes||!j.routes[0]||!j.routes[0].geometry)throw new Error('no route');const rt=j.routes[0];
+rt.legs.forEach((l,i)=>{if(wp[i+1])LG[lk(wp[i],wp[i+1])]={d:l.distance/1000,t:l.duration/60}});
+return RC[key]={pts:rt.geometry.coordinates.map(c=>[c[1],c[0]])}}
+catch(e){RF[key]=Date.now();return null}finally{clearTimeout(tm);delete RQ[key]}})();return RQ[key]}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),2200)}
+const TABS=[['map','Карта'],['events','События'],['day','Мой день'],['favs','Избранное'],['tickets','Билеты'],['friends','Друзья'],['me','Профиль']];
+function go(t){S.tab=t;R()}
+function nav(){$('#nav').innerHTML='<div class="logo">Qala<small>Казахстан</small></div>'+TABS.map(([k,l])=>`<button class="tab ${S.tab==k?'on':''}" onclick="go('${k}')">${l}</button>`).join('')+`<label class="citysel">Город<select class="sel" aria-label="Город" onchange="setCity(this.value)">${cityOpts(S.city)}</select></label>`}
+/* onboarding */
+function ob(){const o=$('#ob');if(S.ready||(CLOUD&&!UID)){o.style.display='none';return}o.style.display='grid';
+o.innerHTML=`<div class="obc"><div class="logo">Qala</div><h1>Всё, что происходит в городах Казахстана, на одной карте</h1>
+<label class="fld">Как вас зовут?<input class="search" id="obn" maxlength="30" autocomplete="name" placeholder="Ваше имя" value="${esc(nmv())}" oninput="S.nm=this.value;$('#obgo').disabled=!(this.value.trim()&&S.ints.size)"></label>
+<div class="seg">${['Турист','Житель'].map(r=>`<button class="chip ${S.role==r?'on':''}" onclick="setRole('${r}')">${r}</button>`).join('')}</div>
+${S.role=='Житель'?`<label class="fld">В каком городе вы живёте?<select class="sel" id="obc" onchange="S.home=this.value;S.city=this.value">${cityOpts(S.home)}</select></label>`:''}
+<div><p class="mut" style="margin-bottom:10px">Что вам интересно?</p><div class="row">${Object.entries(CAT).map(([k,[l,e]])=>`<button class="chip ${S.ints.has(k)?'on':''}" onclick="tg(S.ints,'${k}');P.ints=new Set(S.ints);ob()">${e} ${l}</button>`).join('')}</div></div>
+<div class="card"><span class="mut">Ваш личный ID. Сообщите его друзьям, чтобы они вас добавили</span><div class="myid" style="margin-top:6px"><b>${fId(MYID)}</b></div></div>
+<button class="btn" id="obgo" ${S.ints.size&&nmv().trim()?'':'disabled'} onclick="finishOb()">Открыть карту</button></div>`}
+function tg(set,k){set.has(k)?set.delete(k):set.add(k)}
+/* map */
+function setRole(r){S.role=r;if(r=='Житель'&&!S.home)S.home=S.city;ob()}
+function persistHome(){if(CLOUD)return;try{if(S.role=='Житель'&&S.home)localStorage.setItem('qala_home',S.home);else localStorage.removeItem('qala_home')}catch(e){}}
+function goCity(){const c=CITIES.find(x=>x.id==S.city);if(MAP&&c)MAP.setView([c.lat,c.lng],13)}
+function setCity(v){if(!CITIES.some(c=>c.id==v))return;S.city=v;S.sel=null;P.res=null;const c=CITIES.find(x=>x.id==v);if(MAP){S.tab=='map'?MAP.flyTo([c.lat,c.lng],13):MAP.setView([c.lat,c.lng],13)}R()}
+function setHome(v){if(!CITIES.some(c=>c.id==v))return;S.home=v;S.city=v;P.res=null;persistHome();saveProf();goCity();R();toast('Город проживания: '+CN(v))}
+function allKz(){if(MAP)MAP.flyTo([48.3,67.5],5)}
+function nearCity(){let b=null,bd=60;CITIES.forEach(c=>{const d=km({lat:USER[0],lng:USER[1]},c);if(d<bd){bd=d;b=c.id}});return b}
+let MAP,LAY,ME,ACC,WATCH=null,USER=null;
+function ensureMap(){if(MAP||!S.ready)return;
+if(!window.L){$('#lm').innerHTML='<p class="mut" style="padding:90px 24px">Не удалось загрузить карту. Проверьте интернет.</p>';return}
+const c0=CITIES.find(c=>c.id==S.city)||CITIES[0];MAP=L.map('lm',{zoomControl:false,attributionControl:false}).setView([c0.lat,c0.lng],13);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(MAP);
+L.control.zoom({position:'bottomleft'}).addTo(MAP);
+LAY=L.layerGroup().addTo(MAP);MAP.on('zoomend',marks);locate(false)}
+function locate(center){if(!navigator.geolocation)return toast('Этот браузер не поддерживает геолокацию');if(!MAP)return;
+if(WATCH!==null){if(center&&USER)MAP.flyTo(USER,16);else if(center)toast('Определяем ваше местоположение…');return}
+if(center)toast('Определяем ваше местоположение…');
+WATCH=navigator.geolocation.watchPosition(p=>{const first=!ME;USER=[p.coords.latitude,p.coords.longitude];let chg=false;if(first&&S.role!='Житель'){const nc=nearCity();if(nc&&nc!=S.city){S.city=nc;P.res=null;chg=true}}
+if(first){ME=L.marker(USER,{icon:L.divIcon({className:'',html:'<div class="me-dot"></div>',iconSize:[20,20]}),zIndexOffset:1000,interactive:false}).addTo(MAP);ACC=L.circle(USER,{radius:p.coords.accuracy,color:'#2A7BFF',weight:1,fillOpacity:.1,interactive:false}).addTo(MAP);MAP.flyTo(USER,15)}
+else{ME.setLatLng(USER);ACC.setLatLng(USER).setRadius(p.coords.accuracy)}setAway();if(chg)R()},
+e=>{navigator.geolocation.clearWatch(WATCH);WATCH=null;toast(e.code==1?'Разрешите доступ к геолокации в настройках браузера':'Не удалось определить местоположение')},{enableHighAccuracy:true,maximumAge:5000,timeout:20000})}
+function setAway(){const el=$('#away'),p=PL.find(x=>x.id==S.sel);if(!el||!p||!USER)return;el.textContent=`${km({lat:USER[0],lng:USER[1]},p).toFixed(1)} км от вас`}
+function marks(){if(!MAP)return;LAY.clearLayers();
+if(MAP.getZoom()<9){CITIES.forEach(c=>{const n=EV.filter(e=>e.d==S.date&&e.city==c.id).length;
+const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:`<div class="cm ${c.id==S.city?'on':''}"><b>${c.n}</b>${S.le&&n?`<span>${n}</span>`:''}</div>`,iconSize:[0,0]}),title:c.n}).addTo(LAY);m.on('click',()=>setCity(c.id))});return}
+const q=S.q.toLowerCase();
+PL.forEach(p=>{const dim=q&&!p.n.toLowerCase().includes(q),n=EV.filter(e=>e.d==S.date&&e.v==p.id).length,sp=S.lp,se=S.le&&n;if(!sp&&!se)return;
+const html=`<div class="mk ${S.sel==p.id?'on':''} ${sp?'':'evonly'} ${dim?'dim':''}" style="--c:${COL[p.c]}">${se?`<span class="ev">${n}</span>`:''}</div>`;
+const m=L.marker([p.lat,p.lng],{icon:L.divIcon({className:'',html,iconSize:[26,26],iconAnchor:[13,13]}),title:p.n}).addTo(LAY);
+m.on('click',()=>pick(p.id));m.bindTooltip(p.n,{direction:'bottom',offset:[0,18]})});
+if(S.lf){const cnt={};S.fr.forEach(f=>{const p=PL.find(x=>x.id==f.p);if(!p)return;const k=cnt[f.p]=(cnt[f.p]||0)+1,y=40+(k-1)*36;
+const m=L.marker([p.lat,p.lng],{icon:L.divIcon({className:'',html:`<div class="fm">${esc(f.n[0].toUpperCase())}</div>`,iconSize:[32,32],iconAnchor:[-22,y],tooltipAnchor:[58,16-y]}),zIndexOffset:500,title:f.n}).addTo(LAY);
+m.bindTooltip(esc(f.n),{permanent:true,direction:'right',className:'fl'});m.on('click',()=>pick(f.p))})}}
+function pick(id){const p=PL.find(x=>x.id==id);if(p&&p.city!=S.city){S.city=p.city;P.res=null}S.sel=id;R();if(MAP&&p){if(MAP.getZoom()<9)MAP.flyTo([p.lat,p.lng],14);else MAP.panTo([p.lat,p.lng])}}
+function stars(r){return'★'.repeat(Math.round(r))+'☆'.repeat(5-Math.round(r))}
+function panel(){const p=PL.find(x=>x.id==S.sel);if(!p)return'';const ev=EV.filter(e=>e.d==S.date&&e.v==p.id);const has=(S.day[S.date]||[]).some(i=>i.k=='p'&&i.id==p.id);
+return`<aside class="panel"><button class="x" onclick="S.sel=null;R()" aria-label="Закрыть">×</button><div class="art" style="background:${COL[p.c]}">${CAT[p.c][0]}</div><div class="pb"><div><h2>${p.n}</h2><p class="mut">${p.a}, ${CN(p.city)}</p></div>
+<div class="row"><b style="color:var(--gold)">${stars(p.r)}</b><b>${p.r}</b><span class="mut">${p.rv} отзывов</span></div>
+<div class="row"><span class="tag">${CAT[p.c][0]}</span><span class="tag">${p.in?'Внутри':'На улице'}</span><span class="tag">~${p.du} ч</span><span class="tag" id="away"></span></div><p>${p.d}</p>${S.fr.some(f=>f.p==p.id)?`<p>Здесь друзья: <b>${S.fr.filter(f=>f.p==p.id).map(f=>esc(f.n)).join(', ')}</b></p>`:''}<p class="quote">${p.q}</p>
+${ev.length?`<div><b>В этот день здесь</b>${ev.map(e=>`<div class="row" style="justify-content:space-between;margin-top:8px"><span>${fT(e.t)} · ${e.n}</span><button class="btn sm ghost" onclick="addE('${e.id}')">В мой день</button></div>`).join('')}</div>`:''}
+<div class="row"><button class="btn" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}','_blank','noopener')">Маршрут</button><button class="btn gold" ${has?'disabled':''} onclick="addP('${p.id}')">${has?'Уже в дне':'В мой день'}</button><button class="btn ghost" onclick="fav('p:${p.id}')">${isF('p:'+p.id)?'В избранном':'В избранное'}</button></div></div></aside>`}
+function mapPage(){return`<div class="top"><input class="search" id="q" type="search" placeholder="Найти место" aria-label="Поиск" value="${S.q}" oninput="S.q=this.value;marks()">
+<button class="chip ${S.lp?'on':''}" onclick="S.lp=!S.lp;R()">Места</button><button class="chip ${S.le?'on':''}" onclick="S.le=!S.le;R()">События</button><button class="chip ${S.lf?'on':''}" onclick="S.lf=!S.lf;R()">Друзья</button><button class="chip" onclick="locate(true)">Где я</button><button class="chip" onclick="allKz()">Весь Казахстан</button>
+<div class="row" style="width:100%">${DN.map((n,i)=>`<button class="chip ${S.date==i?'on':''}" onclick="S.date=${i};R()">${n} ${10+i}</button>`).join('')}</div></div>${panel()}`}
+/* day helpers */
+function addP(id){const p=PL.find(x=>x.id==id),l=S.day[S.date]||(S.day[S.date]=[]);if(l.some(i=>i.k=='p'&&i.id==id))return toast('Это место уже в дне');const end=l.reduce((m,i)=>Math.max(m,i.t+i.d),9.5);l.push({k:'p',id,t:Math.min(end+.5,22),d:p.du});toast(`«${p.n}» добавлено в день`);R()}
+function addE(id){const e=EV.find(x=>x.id==id),l=S.day[S.date]||(S.day[S.date]=[]);if(l.some(i=>i.k=='e'&&i.id==id))return toast('Это событие уже в дне');l.push({k:'e',id,t:e.t,d:e.du});toast(`«${e.n}» добавлено в день`);R()}
+function rm(n){(S.day[S.date]).splice(n,1);R()}
+function strip(){return`<div class="days">${DN.map((n,i)=>`<button class="day ${S.date==i?'on':''}" onclick="S.date=${i};P.res=null;R()">${n}<b>${10+i}</b></button>`).join('')}</div>`}
+/* events */
+const cityOrder=()=>[S.city,...CITIES.map(c=>c.id).filter(c=>c!=S.city)];
+function evGroups(fn){const all=EV.filter(e=>e.d==S.date&&fn(e)).sort((a,b)=>a.t-b.t),ids=S.ec=='city'?[S.city]:cityOrder();return ids.map(c=>[c,all.filter(e=>e.city==c)]).filter(g=>g[1].length)}
+function scope(fn){const all=EV.filter(e=>e.d==S.date&&fn(e)),mine=all.filter(e=>e.city==S.city).length;return`<div class="row" style="margin-top:12px"><button class="chip ${S.ec=='city'?'on':''}" onclick="S.ec='city';R()">${CN(S.city)} · ${mine}</button><button class="chip ${S.ec=='all'?'on':''}" onclick="S.ec='all';R()">Все города · ${all.length}</button></div>`}
+function evBlocks(g,row,empty){return g.length?g.map(([c,l])=>`${S.ec=='all'?`<h2 class="cityh">${CN(c)}</h2>`:''}<div class="list">${l.map(row).join('')}</div>`).join(''):`<p class="mut" style="margin-top:16px">${empty||'В этот день событий нет.'}</p>`}
+function events(){const fn=e=>S.fc=='all'||e.c==S.fc;
+const row=e=>{const v=PL.find(p=>p.id==e.v),ad=(S.day[S.date]||[]).some(i=>i.k=='e'&&i.id==e.id);return`<div class="ev"><div class="t">${fT(e.t)}</div><div><b>${e.n}</b><div class="mut">${v.n}, ${v.a}</div><div class="mut">${e.pr?'от '+money(e.pr):'бесплатно'}</div></div><div class="row"><button class="btn sm ghost" aria-label="Избранное" onclick="fav('e:${e.id}')">${isF('e:'+e.id)?'Сохранено':'Сохранить'}</button><button class="btn sm ghost" onclick="seeF('${e.v}')">На карте</button><button class="btn sm ${ad?'ghost':''}" ${ad?'disabled':''} onclick="addE('${e.id}')">${ad?'В дне':'В мой день'}</button></div></div>`};
+return`<div class="page"><h1>События</h1>${strip()}${scope(fn)}<div class="row" style="margin-top:12px"><button class="chip ${S.fc=='all'?'on':''}" onclick="S.fc='all';R()">Все</button>${Object.entries(CAT).map(([k,[n,e]])=>`<button class="chip ${S.fc==k?'on':''}" onclick="S.fc='${k}';R()">${e} ${n}</button>`).join('')}</div>${evBlocks(evGroups(fn),row,'В этой категории в этот день пусто. Выберите другой день или категорию.')}</div>`}
+/* planner */
+function build(){const{s,e,b,ints,ex,j}=P,dt=S.date,jit=()=>Math.random()*j;
+const evs=EV.filter(x=>x.city==S.city&&x.d==dt&&x.t>=s&&x.t+x.du<=e&&x.pr<=b&&!ex.has('e'+x.id)).map(x=>({...x,sc:(ints.has(x.c)?3:0)+jit()})).sort((a,c)=>c.sc-a.sc);
+const fx=[];let sp=0;for(const x of evs){if(fx.length>=2)break;if(sp+x.pr>b)continue;if(fx.some(f=>x.t<f.t+f.du+.5&&f.t<x.t+x.du+.5))continue;fx.push(x);sp+=x.pr}
+fx.sort((a,c)=>a.t-c.t);const gaps=[];let cur=s;fx.forEach(f=>{if(f.t-.5>cur)gaps.push([cur,f.t-.5]);cur=f.t+f.du+.5});if(e>cur)gaps.push([cur,e]);
+const cands=PL.filter(p=>p.city==S.city&&!ex.has('p'+p.id)).map(p=>({...p,sc:(ints.has(p.c)?3:0)+p.r/2+jit()})).sort((a,c)=>c.sc-a.sc);const pl=[];
+for(const c of cands){if(pl.length>=4)break;for(const g of gaps){if(g[1]-g[0]>=c.du){pl.push({k:'p',id:c.id,t:g[0],d:c.du});g[0]+=c.du+.5;break}}}
+return[...fx.map(x=>({k:'e',id:x.id,t:x.t,d:x.du})),...pl].sort((a,c)=>a.t-c.t)}
+function why(i){const o=obj(i),v=ven(i);if(P.ints.has(o.c))return`Вам интересно: ${CAT[o.c][0].toLowerCase()}`;if(i.k=='p'&&o.r>=4.7)return`Рейтинг ${o.r}, один из лучших в городе`;if(v.in)return'Внутри, можно согреться';return'Хорошо ложится между другими остановками'}
+function gen(re){if(!re){P.ex=new Set();P.j=.3}else P.j=1;P.res=build();R()}
+function swp(k){P.ex.add(k);P.res=build();R()}
+function accept(){S.day[S.date]=P.res.map(i=>({...i}));P.res=null;toast('Маршрут сохранён в ваш день');R()}
+function items(l,mode){let h='';l.forEach((it,n)=>{const o=obj(it),v=ven(it);if(n){const a=ven(l[n-1]),k=lk(a,v);GK[k]=[a,v];h+=`<div class="gap" data-k="${k}">${gapText(a,v)}</div>`}
+h+=`<div class="it ${it.a?'done':''}"><b style="font-weight:700">${fT(it.t)}</b><div><b>${it.k=='e'?'':''}${o.n}</b><div class="mut" style="font-size:13px">${mode=='plan'?why(it):(it.k=='e'?'событие':'место')+' · '+it.d+' ч'}</div><div class="mut" style="font-size:12px">${addr(v)}</div></div>
+<div class="row">${mode=='plan'?`<button class="btn sm ghost" onclick="swp('${it.k}${it.id}')">Заменить</button>`:`${it.k=='e'&&!it.a?`<button class="btn sm gold" onclick="chk(${n})">Я здесь</button>`:''}${it.a?'<span class="tag">Отмечено</span>':''}<button class="btn sm ghost" aria-label="Убрать" onclick="rm(${n})">×</button>`}</div></div>`});return h}
+let MM=[],MQ=[];
+function mini(l,id){if(!l.length)return'';MQ.push([id,l]);return`<div id="${id}" class="mm" aria-label="Маршрут на карте"></div><p class="mut" id="${id}n" style="font-size:12px;margin-top:6px"></p>`}
+function setKm(id,l){document.querySelectorAll(`.rkm[data-m="${id}"]`).forEach(e=>e.textContent=route(l).toFixed(1))}
+async function loadRoads(m,id,l,pts){const note=document.getElementById(id+'n'),runs=runsOf(l);if(!runs.length){if(note)note.textContent='';return}
+if(note)note.textContent='Строим маршрут по улицам…';
+const res=await Promise.all(runs.map(roadRun));if(m.__dead)return;
+const ok=res.filter(Boolean),all=[];
+ok.forEach(r=>{L.polyline(r.pts,{color:'#fff',weight:9,opacity:.9,lineCap:'round',lineJoin:'round'}).addTo(m);L.polyline(r.pts,{color:'#1F5FD1',weight:5,lineCap:'round',lineJoin:'round'}).addTo(m);all.push(...r.pts)});
+if(all.length){m.fitBounds(L.latLngBounds(all.concat(pts)),{padding:[34,34],maxZoom:17});m.eachLayer(x=>{if(x instanceof L.Marker)x.setZIndexOffset(1000)})}
+if(note)note.textContent=ok.length==res.length?'Маршрут проложен по улицам и тротуарам (данные OpenStreetMap).':ok.length?'Часть маршрута по улицам не построилась, там показана прямая линия.':'Не удалось построить путь по улицам, показана прямая линия. Расстояние приблизительное.';
+refreshGaps();setKm(id,l)}
+function drawMini(){MM.forEach(m=>{m.__dead=1;m.remove()});MM=[];
+MQ.forEach(([id,l])=>{const el=document.getElementById(id);if(!el||!window.L)return;
+const m=L.map(el,{attributionControl:false,scrollWheelZoom:false});
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(m);
+const pts=l.map(i=>{const v=ven(i);return[v.lat,v.lng]});
+L.polyline(pts,{color:'#1F5FD1',weight:3,opacity:.55,dashArray:'2 9',lineCap:'round'}).addTo(m);
+l.forEach((it,n)=>{const v=ven(it);L.marker([v.lat,v.lng],{zIndexOffset:1000,icon:L.divIcon({className:'',html:`<div class="nm">${n+1}</div>`,iconSize:[30,30],iconAnchor:[15,15]})}).addTo(m).bindTooltip(`${esc(obj(it).n)}<br>${esc(v.a)}`,{direction:'top',offset:[0,-14]})});
+m.fitBounds(pts,{padding:[34,34],maxZoom:16});MM.push(m);loadRoads(m,id,l,pts)});MQ=[]}
+function chk(n){const before=badges().filter(b=>b.ok).length;S.day[S.date].sort((a,b)=>a.t-b.t)[n].a=true;S.att++;const after=badges().filter(b=>b.ok).length;toast(after>before?'Новый значок получен!':'Отметка сохранена');R()}
+function day(){const l=(S.day[S.date]||[]).slice().sort((a,b)=>a.t-b.t);S.day[S.date]=l;const hrs=l.reduce((s,i)=>s+i.d,0),pv=P.res;const opt=(a,b,v)=>Array.from({length:b-a+1},(_,i)=>a+i).map(h=>`<option value="${h}" ${h==v?'selected':''}>${pad(h)}:00</option>`).join('');
+return`<div class="page"><h1>Мой день · ${10+S.date} ноября</h1>${strip()}<div class="grid2"><section>
+<div class="stats"><div><b>${l.length}</b><span class="mut">остановок</span></div><div><b>${hrs}</b><span class="mut">часов</span></div><div><b class="rkm" data-m="mm1">${route(l).toFixed(1)}</b><span class="mut">км</span></div></div>
+<div class="tl">${l.length?items(l,'day'):'<div class="card mut">Здесь пока пусто. Добавьте места с карты или события из ленты, либо соберите маршрут справа.</div>'}</div>${mini(l,'mm1')}</section>
+<section class="card"><h2>Собрать маршрут</h2><p class="mut" style="margin-top:4px">Город маршрута: ${CN(S.city)}. Его можно сменить в меню сверху.</p><div class="row" style="margin:14px 0"><label class="fld">С<select class="sel" onchange="P.s=+this.value">${opt(6,20,P.s)}</select></label><label class="fld">До<select class="sel" onchange="P.e=+this.value">${opt(8,23,P.e)}</select></label></div>
+<label class="fld">Бюджет на события<input type="range" min="0" max="15000" step="500" value="${P.b}" oninput="this.nextElementSibling.textContent=money(this.value)" onchange="P.b=+this.value"><b style="color:var(--ink)">${money(P.b)}</b></label>
+<div class="row" style="margin:14px 0">${Object.entries(CAT).map(([k,[n,e]])=>`<button class="chip ${P.ints.has(k)?'on':''}" onclick="tg(P.ints,'${k}');R()">${e} ${n}</button>`).join('')}</div>
+<button class="btn gold" style="width:100%" onclick="gen(false)">Собрать маршрут</button>
+${pv?(pv.length?`<div class="tl">${items(pv,'plan')}</div>${mini(pv,'mm2')}<p class="mut" style="margin-top:10px">${pv.length} остановок · <span class="rkm" data-m="mm2">${route(pv).toFixed(1)}</span> км</p><div class="row" style="margin-top:12px"><button class="btn" onclick="accept()">Принять</button><button class="btn ghost" onclick="gen(true)">Заново</button></div>`:'<p class="mut" style="margin-top:14px">В это время ничего не нашлось. Расширьте часы или увеличьте бюджет.</p>'):''}</section></div></div>`}
+/* favorites */
+const isF=k=>S.fav.includes(k);
+function fav(k){const i=S.fav.indexOf(k);i<0?S.fav.push(k):S.fav.splice(i,1);sv();
+if(CLOUD)(i<0?sb.from('favorites').insert({key:k}):sb.from('favorites').delete().eq('key',k)).then(r=>{if(r.error)toast('Не удалось сохранить в облаке')});toast(i<0?'Добавлено в избранное':'Убрано из избранного');R()}
+const evById=id=>EV.find(e=>e.id==id);
+function seeE(id){const e=evById(id);S.date=e.d;seeF(e.v)}
+function addEF(id){S.date=evById(id).d;addE(id)}
+function favs(){const ps=S.fav.filter(k=>k[0]=='p').map(k=>PL.find(p=>p.id==k.slice(2))).filter(Boolean),es=S.fav.filter(k=>k[0]=='e').map(k=>evById(k.slice(2))).filter(Boolean).sort((a,b)=>a.d-b.d||a.t-b.t);
+const f=S.ff,sp=f!='e'?ps:[],se=f!='p'?es:[],chip=(k,l)=>`<button class="chip ${f==k?'on':''}" onclick="S.ff='${k}';R()">${l}</button>`;
+return`<div class="page" style="max-width:860px"><h1>Избранное</h1><div class="row" style="margin-top:18px">${chip('all','Все · '+(ps.length+es.length))}${chip('p','Места · '+ps.length)}${chip('e','События · '+es.length)}</div>
+${sp.length+se.length?'':'<div class="card mut" style="margin-top:18px;max-width:760px">Здесь пока пусто. Нажмите «В избранное» в карточке места или «Сохранить» у события, и оно появится здесь.</div>'}
+<div class="list">${sp.map(p=>`<div class="ev ef"><div class="sq" style="background:${COL[p.c]}"></div><div><b>${p.n}</b><div class="mut">${p.a} · ★ ${p.r} (${p.rv})</div></div><div class="row"><button class="btn sm ghost" onclick="seeF('${p.id}')">На карте</button><button class="btn sm" onclick="addP('${p.id}')">В мой день</button><button class="btn sm ghost" aria-label="Убрать из избранного" onclick="fav('p:${p.id}')">Убрать</button></div></div>`).join('')}
+${se.map(e=>{const v=PL.find(p=>p.id==e.v);return`<div class="ev ef"><div><div class="t">${fT(e.t)}</div><div class="mut" style="font-size:12px">${DN[e.d]} ${10+e.d}</div></div><div><b>${e.n}</b><div class="mut">${addr(v)}</div><div class="mut">${e.pr?'от '+money(e.pr):'бесплатно'}</div></div><div class="row"><button class="btn sm ghost" onclick="seeE('${e.id}')">На карте</button><button class="btn sm" onclick="addEF('${e.id}')">В мой день</button><button class="btn sm ghost" aria-label="Убрать из избранного" onclick="fav('e:${e.id}')">Убрать</button></div></div>`}).join('')}</div></div>`}
+/* tickets */
+function qr(code){let h=0;for(const c of code)h=(h*31+c.charCodeAt(0))>>>0;const rnd=()=>{h=(h*1664525+1013904223)>>>0;return h/4294967296},n=21,fp=(x,y)=>`<rect x="${x}" y="${y}" width="7" height="7"/><rect x="${x+1}" y="${y+1}" width="5" height="5" fill="#fff"/><rect x="${x+2}" y="${y+2}" width="3" height="3"/>`;let r='';
+for(let y=0;y<n;y++)for(let x=0;x<n;x++){if((x<8&&y<8)||(x>n-9&&y<8)||(x<8&&y>n-9))continue;if(rnd()<.5)r+=`<rect x="${x}" y="${y}" width="1" height="1"/>`}
+return`<svg viewBox="-2 -2 25 25" role="img" aria-label="QR-код"><rect x="-2" y="-2" width="25" height="25" fill="#fff"/><g fill="#12233A">${r}${fp(0,0)}${fp(n-7,0)}${fp(0,n-7)}</g></svg>`}
+function tk(t,e){const v=PL.find(p=>p.id==e.v);return`<div class="tk"><div class="tkm"><b>${DN[e.d]} ${10+e.d}</b><span>ноября</span><div class="tkt">${fT(e.t)}</div></div><div class="tkb"><b>${e.n}</b><div class="mut">${addr(v)}</div><div class="mut">${t.q} × ${e.pr?money(e.pr)+' = '+money(e.pr*t.q):'бесплатно'}</div><div class="row" style="margin-top:8px"><button class="btn sm" onclick="seeE('${e.id}')">На карте</button><button class="btn sm ghost" onclick="refund('${t.code}')">Вернуть</button></div></div><div class="tkq">${qr(t.code)}<small>${t.code}</small></div></div>`}
+function tickets(){const mine=S.tk.map(t=>({t,e:evById(t.id)})).filter(x=>x.e).sort((a,b)=>a.e.d-b.e.d||a.e.t-b.e.t),has=id=>S.tk.some(t=>t.id==id),chip=(k,l)=>`<button class="chip ${S.tt==k?'on':''}" onclick="S.tt='${k}';R()">${l}</button>`;let body;
+if(S.tt=='mine')body=mine.length?`<div class="list tks">${mine.map(x=>tk(x.t,x.e)).join('')}</div><p class="mut" style="margin-top:16px;font-size:12px;max-width:760px">Оплата и QR-код демонстрационные: деньги не списываются, сканировать код нельзя.</p>`:'<div class="card mut" style="margin-top:18px;max-width:760px">У вас пока нет билетов. Откройте вкладку «Купить» и выберите событие.</div>';
+else body=strip()+scope(()=>true)+evBlocks(evGroups(()=>true),e=>{const v=PL.find(p=>p.id==e.v);return`<div class="ev"><div class="t">${fT(e.t)}</div><div><b>${e.n}</b><div class="mut">${v.n}, ${v.a}</div><div class="mut">${e.pr?'от '+money(e.pr):'бесплатно'}</div></div><div class="row">${has(e.id)?'<button class="btn sm ghost" disabled>Билет есть</button>':`<button class="btn sm gold" onclick="openBuy('${e.id}')">${e.pr?'Купить':'Получить'}</button>`}</div></div>`});
+return`<div class="page" style="max-width:860px"><h1>Билеты</h1><div class="row" style="margin-top:18px">${chip('mine','Мои билеты · '+mine.length)}${chip('buy','Купить')}</div>${S.tt=='mine'?'<div style="height:14px"></div>':''}${body}</div>`}
+function openBuy(id){S.buy={id,q:1,pay:'Kaspi',step:'info'};S.ask=null;renderMd()}
+function qty(d){S.buy.q=Math.min(5,Math.max(1,S.buy.q+d));renderMd()}
+function closeBuy(){S.buy=null;S.ask=null;renderMd()}
+const dg=t=>t.replace(/\D/g,'');
+function fmtCard(i){const d=dg(i.value).slice(0,16);i.value=d.replace(/(.{4})/g,'$1 ').trim();const b=$('#brand');if(b)b.textContent=d[0]=='4'?'Visa':/^[25]/.test(d)?'Mastercard':''}
+function fmtExp(i){const d=dg(i.value).slice(0,4);i.value=d.length>2?d.slice(0,2)+'/'+d.slice(2):d}
+function fmtCvv(i){i.value=dg(i.value).slice(0,3)}
+function fmtPhone(i,ev){if(ev&&ev.inputType&&ev.inputType.startsWith('delete'))return;const d=dg(i.value).replace(/^[78]/,'').slice(0,10);let r='+7 ('+d.slice(0,3);if(d.length>=3)r+=') '+d.slice(3,6);if(d.length>=6)r+='-'+d.slice(6,8);if(d.length>=8)r+='-'+d.slice(8,10);i.value=d?r:''}
+function renderMd(){const m=$('#md');
+if(S.ask){const t=S.tk.find(x=>x.code==S.ask),e=t&&evById(t.id);if(!e){S.ask=null;m.style.display='none';m.innerHTML='';return}
+m.style.display='grid';m.innerHTML=`<div class="mc" role="alertdialog" aria-labelledby="mt"><h2 id="mt">${e.pr?'Вернуть билет?':'Отменить билет?'}</h2><div><b>${e.n}</b><div class="mut">${DN[e.d]} ${10+e.d} ноября, ${fT(e.t)} · ${t.q} шт.</div></div><p>${e.pr?`Мы вернём ${money(e.pr*t.q)} тем же способом, которым вы платили. `:''}Билет и QR-код перестанут действовать.</p><div class="row"><button class="btn danger" onclick="confirmRefund()">${e.pr?'Вернуть билет':'Отменить билет'}</button><button class="btn ghost" onclick="closeBuy()">Оставить</button></div></div>`;return}
+if(!S.buy){m.style.display='none';m.innerHTML='';return}
+const b=S.buy,e=evById(b.id),v=PL.find(p=>p.id==e.v),tot=e.pr*b.q,back=`<button class="btn ghost" onclick="S.buy.step='info';renderMd()">Назад</button>`,err='<div id="perr" role="alert" style="color:#C0392B;font-size:13px;min-height:18px"></div>';let h;
+if(b.step=='card')h=`<h2>Оплата картой</h2><div class="mut">${e.n} · ${b.q} шт. · ${money(tot)}</div>
+<label class="fld">Номер карты<input class="search" id="cn" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="0000 0000 0000 0000" oninput="fmtCard(this)"><span id="brand" style="font-size:12px;min-height:16px"></span></label>
+<div class="row" style="flex-wrap:nowrap;align-items:flex-start"><label class="fld" style="flex:1">Срок действия<input class="search" id="ce" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="ММ/ГГ" oninput="fmtExp(this)"></label><label class="fld" style="flex:1">CVV/CVC<input class="search" id="cc" type="password" inputmode="numeric" autocomplete="cc-csc" maxlength="3" placeholder="•••" oninput="fmtCvv(this)"></label></div>${err}
+<div class="row"><button class="btn gold" id="pb" style="flex:1" onclick="payCard()">Оплатить ${money(tot)}</button>${back}</div><p class="mut" style="font-size:12px">Демо: данные карты никуда не отправляются и не сохраняются.</p>`;
+else if(b.step=='kaspi')h=`<h2>Оплата через Kaspi</h2><div class="mut">${e.n} · ${b.q} шт. · ${money(tot)}</div>
+<label class="fld">Номер телефона в Kaspi<input class="search" id="kp" type="tel" inputmode="tel" autocomplete="tel" maxlength="18" placeholder="+7 (___) ___-__-__" oninput="fmtPhone(this,event)"></label>${err}
+<div class="row"><button class="btn gold" id="pb" style="flex:1" onclick="payKaspi()">Оплатить ${money(tot)}</button>${back}</div><p class="mut" style="font-size:12px">Демо: приложение Kaspi не открывается, деньги не списываются.</p>`;
+else h=`<h2>${e.n}</h2><div class="mut">${DN[e.d]} ${10+e.d} ноября, ${fT(e.t)}<br>${addr(v)}</div>
+<div class="row" style="justify-content:space-between"><b>Количество</b><div class="row"><button class="btn sm ghost" aria-label="Меньше" onclick="qty(-1)">−</button><b style="min-width:24px;text-align:center">${b.q}</b><button class="btn sm ghost" aria-label="Больше" onclick="qty(1)">+</button></div></div>
+${e.pr?`<label class="fld">Способ оплаты<select class="sel" onchange="S.buy.pay=this.value"><option ${b.pay=='Kaspi'?'selected':''}>Kaspi</option><option ${b.pay!='Kaspi'?'selected':''}>Банковская карта</option></select></label>`:''}
+<div class="row" style="justify-content:space-between"><b>Итого</b><b style="font-weight:700;font-size:18px">${e.pr?money(tot):'бесплатно'}</b></div>
+<div class="row"><button class="btn gold" style="flex:1" onclick="goPay()">${e.pr?'К оплате':'Получить билет'}</button><button class="btn ghost" onclick="closeBuy()">Отмена</button></div>`;
+m.style.display='grid';m.innerHTML=`<div class="mc">${h}</div>`;
+if(b.step!='info')setTimeout(()=>{const f=m.querySelector&&m.querySelector('input');if(f)f.focus()},0)}
+function goPay(){const e=evById(S.buy.id);if(!e.pr)return confirmBuy();S.buy.step=S.buy.pay=='Kaspi'?'kaspi':'card';renderMd()}
+function pay(){const b=$('#pb');b.disabled=true;b.textContent='Оплата…';setTimeout(()=>{if(S.buy)confirmBuy()},1100)}
+function payCard(){const n=dg($('#cn').value),x=dg($('#ce').value),c=dg($('#cc').value),mm=+x.slice(0,2),yy=2000+(+x.slice(2)),d=new Date();let msg='';
+if(n.length!=16)msg='Введите все 16 цифр номера карты';
+else if(x.length!=4||mm<1||mm>12)msg='Срок действия укажите в формате ММ/ГГ';
+else if(yy<d.getFullYear()||(yy==d.getFullYear()&&mm<d.getMonth()+1))msg='Срок действия карты истёк';
+else if(c.length!=3)msg='CVV/CVC состоит из 3 цифр';
+if(msg){$('#perr').textContent=msg;return}pay()}
+function payKaspi(){if(dg($('#kp').value).replace(/^[78]/,'').length!=10){$('#perr').textContent='Введите номер телефона полностью';return}pay()}
+function confirmBuy(){const b=S.buy,e=evById(b.id),code='QL-'+Math.random().toString(36).slice(2,8).toUpperCase();
+S.tk.push({id:e.id,q:b.q,code});
+if(CLOUD)sb.from('tickets').insert({code,event_id:e.id,qty:b.q}).then(r=>{if(r.error)toast('Билет не сохранился в облаке')});const l=S.day[e.d]||(S.day[e.d]=[]);if(!l.some(i=>i.k=='e'&&i.id==e.id))l.push({k:'e',id:e.id,t:e.t,d:e.du});
+S.buy=null;renderMd();S.tt='mine';sv();toast(e.pr?'Оплата прошла, билет в «Моих билетах»':'Билет получен');R()}
+function refund(code){S.buy=null;S.ask=code;renderMd()}
+function confirmRefund(){if(CLOUD)sb.from('tickets').delete().eq('code',S.ask).then(r=>{if(r.error)toast('Не удалось вернуть билет в облаке')});S.tk=S.tk.filter(t=>t.code!=S.ask);S.ask=null;renderMd();sv();toast('Билет возвращён');R()}
+$('#md').onclick=e=>{if(e.target.id=='md')closeBuy()};
+addEventListener('keydown',e=>{if(e.key=='Escape'&&(S.buy||S.ask))closeBuy()});
+/* friends */
+const PLUS='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+function friends(){if(CLOUD)return friendsCloud();const opts=plOpts;
+return`<div class="page" style="max-width:860px"><h1>Друзья</h1><p class="mut" style="margin-top:6px">Видно, кто где сейчас. Друга можно показать на карте или пойти к нему.</p>
+<div class="list">${S.fr.map((f,i)=>`<div class="ev fr"><div class="fm">${esc(f.n[0].toUpperCase())}</div><div><b>${esc(f.n)}</b>${f.s?`<span class="mut"> · ${esc(f.s)}</span>`:''}<div class="mut" style="font-size:12px">ID ${fId(f.id)}</div><div class="row" style="margin-top:6px"><select class="sel" aria-label="Где находится ${esc(f.n)}" onchange="movF(${i},this.value)">${opts(f.p)}</select></div></div><div class="row"><button class="btn sm" onclick="seeF('${f.p}')">На карте</button><button class="btn sm gold" onclick="addP('${f.p}')">Пойти туда</button><button class="btn sm ghost" aria-label="Удалить" onclick="delF(${i})">×</button></div></div>`).join('')||'<div class="card mut">Друзей пока нет. Добавьте первого ниже.</div>'}</div>
+<div class="card" style="margin-top:22px;max-width:760px"><h2>Ваш ID</h2><div class="myid" style="margin-top:8px"><b>${fId(MYID)}</b><button class="btn sm ghost" onclick="copyId()">Копировать</button></div><p class="mut" style="font-size:13px;margin-top:6px">Это ваш личный 8-значный номер. Друзья добавляют вас по нему.</p></div>
+<div class="card" style="margin-top:14px;max-width:760px"><h2>Добавить друга по ID</h2><div class="addf"><label class="fld">8-значный ID друга<input class="search" id="fi" inputmode="numeric" maxlength="9" placeholder="0000 0000" autocomplete="off" oninput="fmtId(this)" onkeydown="if(event.key=='Enter')addF()"></label><button class="btn add" id="fb" disabled onclick="addF()">${PLUS}Добавить</button></div><div id="ferr" class="perr" role="alert"></div><p class="mut" style="font-size:12px">Демо: настоящего сервера нет, поэтому профили друзей создаются в этом браузере.</p></div>
+${S.sg.length?`<h2 style="margin-top:26px">Возможно, вы знакомы</h2><div class="list">${S.sg.map((g,i)=>{const p=PL.find(x=>x.id==g.p);return`<div class="ev fr"><div class="fm" style="background:var(--mut)">${esc(g.n[0].toUpperCase())}</div><div><b>${esc(g.n)}</b><div class="mut">ID ${fId(g.id)} · ${CAT[p.c][1]} ${p.n}</div></div><button class="btn add sm" onclick="addSg(${i})">${PLUS}Добавить</button></div>`}).join('')}</div>`:''}</div>`}
+function fmtId(i){const d=dg(i.value).slice(0,8);i.value=d.length>4?d.slice(0,4)+' '+d.slice(4):d;$('#fb').disabled=d.length!=8;$('#ferr').textContent=''}
+function copyId(){const done=()=>toast('ID скопирован: '+fId(MYID));if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(MYID).then(done,()=>toast('Не удалось скопировать. Ваш ID: '+fId(MYID)));else toast('Ваш ID: '+fId(MYID))}
+function addF(){const id=dg($('#fi').value),er=m=>{$('#ferr').textContent=m};
+if(id.length!=8)return er('ID состоит из 8 цифр');
+if(id==MYID)return er('Это ваш собственный ID');
+if(CLOUD)return addFc(id,er);
+if(S.fr.some(f=>f.id==id))return er('Этот друг уже добавлен');
+const si=S.sg.findIndex(g=>g.id==id),g=si>=0?S.sg[si]:null,nm=Object.keys(DID).find(k=>DID[k]==id),n=g?g.n:nm||'Пользователь '+fId(id),p=g?g.p:(c=>c[+id%c.length])(PL.filter(x=>x.city==S.city)).id;
+if(si>=0)S.sg.splice(si,1);S.fr.push({id,n,p,s:'только что добавлен'});sv();toast(`${n} теперь в друзьях`);R()}
+function addSg(i){const g=S.sg[i];if(S.fr.some(f=>f.id==g.id)){S.sg.splice(i,1);sv();return R()}S.sg.splice(i,1);S.fr.push({id:g.id,n:g.n,p:g.p,s:'новый друг'});sv();toast(`${g.n} теперь в друзьях`);R()}
+function delF(i){const g=S.fr[i];if(CLOUD&&g)return sb.rpc('remove_friend',{other:g.uid}).then(r=>{if(r.error)return toast('Не удалось удалить');toast(`${g.n} убран из друзей`);loadFriends()});
+const f=S.fr.splice(i,1)[0];sv();toast(`${f.n} убран из друзей`);R()}
+function movF(i,v){S.fr[i].p=v;S.fr[i].s='сейчас здесь';sv();toast('Место обновлено')}
+function seeF(id){S.tab='map';S.lf=true;pick(id)}
+/* profile */
+function badges(){const all=Object.values(S.day).flat();const pl=new Set(all.filter(i=>i.k=='p').map(i=>i.id)).size;const att=all.filter(i=>i.a);
+return[{n:'Исследователь',ok:pl>=3,h:`${Math.max(0,3-pl)} места до значка`},{n:'Ночная сова',ok:att.some(i=>i.t>=19),h:'отметка на вечернем событии'},{n:'Гурман',ok:all.some(i=>obj(i).c=='Food'),h:'добавьте еду в день'},{n:'Легенда города',ok:S.att>=10,h:`${Math.max(0,10-S.att)} отметок до значка`}]}
+function me(){const all=Object.values(S.day).flat(),bd=badges(),nx=bd.find(b=>!b.ok),places=new Set(all.filter(i=>i.k=='p').map(i=>i.id)).size;
+return`<div class="page" style="max-width:860px"><div class="row" style="gap:18px"><div class="ava">${esc(inits(PNAME))}</div><div><h1>${esc(PNAME)}</h1><p class="mut">${S.role}${S.role=='Житель'&&S.home?' · '+CN(S.home):''}</p></div></div>
+<div class="card" style="margin-top:18px"><span class="mut">Ваш личный ID</span><div class="myid" style="margin-top:6px"><b>${fId(MYID)}</b><button class="btn sm ghost" onclick="copyId()">Копировать</button></div></div>
+${S.role=='Житель'?`<label class="fld" style="margin-top:14px;max-width:320px">Город проживания<select class="sel" onchange="setHome(this.value)">${cityOpts(S.home)}</select></label>`:''}<div class="stats" style="margin:22px 0"><div><b>${S.att}</b><span class="mut">событий посещено</span></div><div><b>${places}</b><span class="mut">мест в планах</span></div><div><b>${S.fr.length}</b><span class="mut">друзей</span></div></div>
+<h2>Значки</h2><div class="badges">${bd.map(b=>`<div class="bd ${b.ok?'':'lock'}"><b>${b.n}</b><span class="mut">${b.ok?'получен':b.h}</span></div>`).join('')}</div>
+${nx?`<div class="card" style="margin-top:14px"><b>Следующий значок: ${nx.n}</b><div class="mut">${nx.h}</div><div class="bar"><i style="width:${bd.filter(b=>b.ok).length/bd.length*100}%"></i></div></div>`:''}
+<h2 style="margin-top:26px">Интересы</h2><div class="row" style="margin-top:12px">${Object.entries(CAT).map(([k,[n,e]])=>`<button class="chip ${S.ints.has(k)?'on':''}" onclick="tg(S.ints,'${k}');P.ints=new Set(S.ints);saveProf();R()">${e} ${n}</button>`).join('')}</div>
+<div class="row" style="margin-top:26px"><button class="btn ghost" onclick="rename()">Изменить имя</button>${CLOUD?'<button class="btn ghost" onclick="sb.auth.signOut()">Выйти</button>':''}<button class="btn ghost" onclick="th()">Сменить тему</button><button class="btn ghost" onclick="S.ready=false;ob()">Пройти знакомство заново</button></div><p class="mut" style="margin-top:28px;font-size:12px">Карта: © участники <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" style="color:inherit">OpenStreetMap</a></p></div>`}
+function th(){const r=document.documentElement,d=matchMedia('(prefers-color-scheme: dark)').matches;const cur=r.dataset.theme||(d?'dark':'light');r.dataset.theme=cur=='dark'?'light':'dark'}
+function R(){nav();const m=S.tab=='map';$('#lm').style.display=m?'block':'none';MQ=[];$('#ui').innerHTML={map:mapPage,events,day,favs,tickets,friends,me}[S.tab]();drawMini();if(m){ensureMap();marks();setAway();if(MAP)setTimeout(()=>MAP.invalidateSize(),0)}syncDay()}
 
-        <!-- 2 Home map -->
-        <section class="screen" id="s-map">
-          <div class="map-top">
-            <div class="search">
-              <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              <input id="searchInput" type="search" placeholder="Search places &amp; events" autocomplete="off">
-            </div>
-            <div class="chips-row">
-              <button class="chip on" data-act="toggleLayer" data-layer="places">Places</button>
-              <button class="chip on" data-act="toggleLayer" data-layer="events">Events</button>
-              <button class="chip" data-act="openAI" data-from="banner">✨ Suggested for you</button>
-            </div>
-            <div class="results" id="searchResults" hidden></div>
-          </div>
-          <div id="map"></div>
-          <button class="fab" data-act="locate" aria-label="My location">
-            <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="3" fill="currentColor"/><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4" stroke="currentColor" stroke-width="2"/></svg>
-          </button>
-          <div class="map-card" id="mapCard" hidden></div>
-        </section>
-
-        <!-- 3 Place card -->
-        <section class="screen overlay" id="s-place"></section>
-
-        <!-- 4 Events -->
-        <section class="screen" id="s-events"></section>
-
-        <!-- 5 My Day -->
-        <section class="screen" id="s-myday"></section>
-
-        <!-- 6 Profile -->
-        <section class="screen" id="s-profile"></section>
-      </main>
-
-      <nav class="tabbar" id="tabbar">
-        <button data-act="go" data-screen="map" class="tab on"><i>🗺️</i><span>Map</span></button>
-        <button data-act="go" data-screen="events" class="tab"><i>📅</i><span>Events</span></button>
-        <button data-act="go" data-screen="myday" class="tab"><i>✅</i><span>My Day</span><b id="mydayBadge" hidden>0</b></button>
-        <button data-act="go" data-screen="profile" class="tab"><i>👤</i><span>Profile</span></button>
-      </nav>
-
-      <div class="backdrop" id="backdrop" hidden></div>
-      <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true"></div>
-      <div class="toast" id="toast" hidden></div>
-    </div>
-  </div>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="js/data.js"></script>
-  <script src="js/planner.js"></script>
-  <script src="js/app.js"></script>
+/* ===== анимации и «Факт о городе» ===== */
+const FACTS={astana:'Байтерек высотой 97 метров напоминает о 1997 годе, когда столицей стала Астана.',almaty:'Каток Медеу лежит на высоте около 1700 метров, это один из самых высокогорных катков мира.',shymkent:'Шымкент один из старейших городов страны: его история насчитывает около двух тысяч лет.',karaganda:'Караганда выросла вокруг угольных шахт и стала центром угольного бассейна.',aktobe:'Актобе вырос из крепости, основанной на реке Илек в 1869 году.',atyrau:'Атырау стоит на реке Урал, по которой проходит условная граница Европы и Азии.',aktau:'В Актау нет улиц с названиями: адреса даются по номерам микрорайонов.',turkestan:'Мавзолей Ходжи Ахмеда Яссауи входит в список Всемирного наследия ЮНЕСКО.'};
+const _events=events;
+events=function(){const h=_events(),n=EV.filter(e=>e.city==S.city).length,ps=PL.filter(p=>p.city==S.city);
+return h.replace('</h1>','</h1><div class="fact"><small>Знаете ли вы · '+CN(S.city)+'</small><b>'+(FACTS[S.city]||'')+'</b><div class="row"><span><span class="cnt" data-n="'+n+'">'+n+'</span> <span style="opacity:.9">событий на неделе</span></span><button class="btn gold sm" onclick="surprise()">Удиви меня местом</button></div></div>')};
+function surprise(){const ps=PL.filter(p=>p.city==S.city);seeF(ps[Math.floor(Math.random()*ps.length)].id)}
+function boom(){const c=['#E9B824','#2BA3B8','#0F6E8C','#F2C94C','#2F855A','#fff'];for(let i=0;i<36;i++){const d=document.createElement('i');d.className='cf';d.style.cssText=`background:${c[i%6]};--x:${(Math.random()-.5)*520}px;--y:${-120-Math.random()*320}px;--rt:${Math.random()*720}deg;animation-delay:${Math.random()*.12}s`;document.body.appendChild(d);setTimeout(()=>d.remove(),1700)}}
+const _cb=confirmBuy;confirmBuy=function(){_cb();boom()};
+const _R=R;R=function(){const ch=S.tab!==R.lt;R.lt=S.tab;_R();
+document.querySelectorAll('.cnt').forEach(el=>{const t=+el.dataset.n,t0=performance.now();(function f(now){const k=Math.min(1,(now-t0)/700);el.textContent=Math.round(t*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(f)})(t0)});
+if(ch){const u=$('#ui');u.classList.add('anim');clearTimeout(R.at);R.at=setTimeout(()=>u.classList.remove('anim'),900)}};
+R();ob();au();initCloud();
+</script>
 </body>
 </html>

@@ -1,76 +1,60 @@
-# Qala — Smart City Guide & Event Hub (clickable prototype)
+# Qala
 
-> **One app. One map. Everything happening.**
-> Interface prototype + AI Day Planner for the **ICT Endterm** (Astana IT University).
-> Team: Daulet, Amir, Aliakhmet.
+Городской гид и афиша событий по городам Казахстана: одна карта, места, события и личный маршрут на день.
 
-A fully clickable, mobile-style web prototype of the Qala app described in the endterm presentation.
-No build step, no backend: plain HTML + CSS + JavaScript, so it runs on **GitHub Pages**.
+Учебный проект по ICT (Daulet, Amir, Aliakhmet).
 
-## Task 1 — Interface prototype (6 screens)
+## Что внутри
 
-| # | Screen | What works |
-|---|--------|-----------|
-| 1 | **Onboarding** | Name, role (Tourist / Local citizen), interests (at least one required) |
-| 2 | **Home Map** | Real interactive map of Astana (Leaflet + OpenStreetMap), place and event pins, search, Places/Events layer toggles, bottom info card, “Suggested for you” |
-| 3 | **Place Card** | Photo gallery slider, rating, reviews (write your own), events at this place, Navigate (opens Google Maps), **+ My Day** |
-| 4 | **Events Timeline** | 7-day date strip, category filters, event details, **+ My Day**, **Check in** |
-| 5 | **My Day** | Day-by-day itinerary, edit time/duration, remove, conflict warnings, walking times, totals, **route on the map**, **Plan my day with AI** |
-| 6 | **Profile** | Stats, 6 badges that unlock from real actions, editable interests/role, friends |
+- **Города**: Астана, Алматы, Шымкент, Караганда, Актобе, Атырау, Актау и Туркестан. Город выбирается в меню сверху справа. При знакомстве житель указывает, где живёт, и сайт открывается в его городе. Если GPS показывает, что турист находится рядом с одним из городов (в пределах 60 км), сайт сам переключается на него. События других городов видны во вкладках «События» и «Билеты» (переключатель «Все города»), а кнопка «Весь Казахстан» на карте показывает все города сразу
+- **Карта**: настоящая карта города (OpenStreetMap), места и события выбранного дня, карточка места с рейтингом, отзывом и расстоянием до вас
+- **GPS**: синяя точка показывает, где вы находитесь, кнопка «Где я» возвращает к ней, «Маршрут» открывает навигацию
+- **События**: лента по дням с фильтром по категориям
+- **Мой день**: личный список остановок, мини-карта маршрута, отметка посещения
+- **Сборка маршрута**: подбор остановок по часам, бюджету и интересам
+- **Избранное**: сохранённые места и события, быстрые кнопки «На карте» и «В мой день»
+- **Билеты**: покупка и бронь билетов на события (демо-оплата), билет с QR-кодом, возврат
+- **Друзья**: у каждого пользователя есть личный 8-значный ID (виден в профиле и на вкладке «Друзья»). Друзей добавляют по ID: человек получает запрос, и только после его согласия друзья видят имя и место друг друга. Место на карте видно, если пользователь сам выбрал «Где вы сейчас»
+- **Профиль**: статистика, значки, интересы, смена имени, выход, светлая и тёмная тема
 
-Bottom navigation (Map · Events · My Day · Profile) is available on every main screen.
-Everything is saved in the browser (`localStorage`); use **Reset demo data** to start again.
+Сборка маршрута работает по правилам на клиенте и строит маршрут в выбранном городе. Данные мест и событий учебные: для Астаны, Алматы и Туркестана названия взяты с настоящих мест, для остальных городов места типовые и стоят недалеко от центра.
 
-### User flows from the slides
-- **Discover:** Home Map → Place Card → “+ My Day”
-- **Events:** Events Timeline → Event details → “+ My Day”
-- **Retention:** Check in at an event → Badge earned → Profile
+## Два режима работы
 
-## Task 2 — AI Day Planner
+- **Демо** (по умолчанию, ключи Supabase не заполнены): всё хранится только в браузере, ID создаётся локально, друзья из списка демонстрационные. Реальных людей найти нельзя.
+- **Облако** (Supabase): регистрация и вход по почте, ID выдаётся сервером, друзья ищутся по ID, избранное, билеты и план дня сохраняются в базе и доступны с любого устройства.
 
-Entry points: **Plan my day with AI** (My Day) and **✨ Suggested for you** (Home Map).
+## Подключение Supabase
 
-1. User sets date, free hours, budget, interests (pre-filled from the profile) and optional free text, e.g. *“indoor only, no museums, more food”*.
-2. `js/planner.js` builds a time-ordered route:
-   - **Recommendation model:** scores every place and event by interest match, rating, weather (demo: −4 °C, snow → indoor bonus) and price.
-   - **Route optimizer:** fixes events at their real times, fills the gaps with places that fit opening hours, budget and walking distance, with no time conflicts.
-   - **Explanation text:** every stop gets a short *“Why this stop”* reason.
-3. User keeps control: **Swap** a stop, **Regenerate**, or **Accept plan** (saves all stops to My Day).
-4. **Feedback loop:** swapped-away stops are remembered and ranked lower next time.
+1. Создайте проект на [supabase.com](https://supabase.com).
+2. Откройте **SQL Editor**, вставьте весь файл `supabase.sql` и нажмите **Run**. Он создаёт таблицы, функции и правила доступа (Row Level Security). Если схему применяли раньше (до появления городов), выполните вместо этого `supabase_update_cities.sql`: он добавляет город проживания и разрешает друзьям быть в любом городе.
+3. **Authentication → URL Configuration**: в *Site URL* укажите адрес сайта на GitHub Pages, иначе ссылки из писем будут вести на localhost.
+4. **Authentication → Providers → Email**: для первых проверок можно отключить *Confirm email*. Для публикации лучше оставить включённым.
+5. **Project Settings → API**: скопируйте *Project URL* и ключ **anon public**. Вставьте их в начало блока «Supabase» в `index.html`:
+   ```js
+   const SB_URL='https://xxxx.supabase.co';
+   const SB_KEY='eyJ...anon-ключ...';
+   ```
+6. Загрузите обновлённый `index.html` на GitHub Pages.
 
-The planner runs locally in the browser, which is also the **rule-based fallback** from the presentation (“a simple rule-based plan is used if AI is unavailable”).
-To use a real LLM, send the same inputs and candidate list from `planner.js` to your own backend endpoint (never put an API key in a GitHub Pages site).
+### Безопасность
 
-## Run locally
+- Ключ `anon` в коде сайта публичен по замыслу: защищает не он, а правила RLS из `supabase.sql`. Ключ `service_role` в `index.html` и в репозиторий добавлять нельзя.
+- Пользователь видит и меняет только свои избранное, билеты и план дня. Профиль и место друга видны только после того, как он принял запрос. Менять `public_id` нельзя.
+- Дружба создаётся только через серверные функции. Поиск по ID ограничен 10 попытками в час, чтобы ID нельзя было перебрать скриптом.
+- Данные банковских карт сайт не хранит и не отправляет: оплата демонстрационная. Для настоящих платежей нужен платёжный провайдер (например, Kaspi Pay или эквайринг банка).
+- Для публикации включите в Supabase защиту от ботов при регистрации (Authentication → Attack Protection, CAPTCHA) и проверьте, что на всех таблицах включён RLS (Table Editor показывает значок).
 
-```bash
-python3 -m http.server 8000
-# open http://localhost:8000
-```
+## Запуск
 
-## Deploy to GitHub Pages
+Сборка не нужна. Для геолокации сайт должен открываться по HTTPS (GitHub Pages подходит) или через `localhost`; при открытии файла двойным кликом браузер может не дать доступ к GPS. Нужен интернет для карты и плиток.
 
-1. Create a repository and upload all files from this folder (keep the structure).
-2. **Settings → Pages → Build and deployment → Deploy from a branch → `main` / `(root)` → Save.**
-3. After about a minute the prototype is live at `https://<username>.github.io/<repository>/`. Add this link to the LMS submission.
+## Публикация на GitHub Pages
 
-## Project structure
+1. Создайте репозиторий и загрузите `index.html`, `supabase.sql`, `supabase_update_cities.sql` и `README.md` в корень.
+2. Settings → Pages → Source: *Deploy from a branch*, ветка `main`, папка `/ (root)`.
+3. Через минуту сайт будет доступен по адресу `https://<ваш-ник>.github.io/<репозиторий>/`.
 
-```
-index.html        app shell
-css/style.css     dark UI, phone frame
-js/data.js        14 places, 16 events, reviews, badges (mirrors the ERD)
-js/planner.js     AI Day Planner engine
-js/app.js         screens, navigation, map, state
-```
+## Технологии
 
-## Notes
-- The map needs internet (Leaflet from unpkg, tiles from CARTO/OpenStreetMap).
-- Places, events, prices and coordinates are demo data; coordinates are approximate.
-- Events are generated relative to *today*, so the timeline is never empty.
-- Inspired by the entities in our ERD: Place, Event, Review, User_Genre, MyDay Item, Attendance.
-
----
-
-### Кратко по-русски
-1. Загрузите все файлы папки в репозиторий GitHub. 2. `Settings → Pages → Deploy from a branch → main / root`. 3. Ссылка вида `https://<ник>.github.io/<репозиторий>/` и есть ссылка на прототип для сдачи в LMS. Скриншоты экранов сделайте с открытой страницы.
+HTML, CSS и JavaScript в одном файле, карта на Leaflet и OpenStreetMap, геолокация через браузерный Geolocation API, база данных и вход через Supabase (PostgreSQL). Шрифт Golos Text подключается с Google Fonts.
